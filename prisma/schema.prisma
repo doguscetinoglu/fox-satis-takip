@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── TENANT ────────────────────────────────────────────────
+model Tenant {
+  id                   String    @id @default(cuid())
+  companyName          String
+  ownerName            String
+  phone                String    @unique
+  passwordHash         String
+  planStatus           PlanStatus @default(TRIAL)
+  trialEndsAt          DateTime
+  subscriptionEndsAt   DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  users                User[]
+  customers            Customer[]
+  salesTargets         SalesTarget[]
+  salesEntries         SalesEntry[]
+  debts                Debt[]
+  payments             Payment[]
+  subscriptionPayments SubscriptionPayment[]
+  activityLogs         ActivityLog[]
+}
+
+enum PlanStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+// ─── USER ──────────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  phone        String
+  passwordHash String
+  name         String
+  role         UserRole @default(SALES_REP)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedCustomers Customer[]   @relation("RepCustomers")
+  salesTargets     SalesTarget[]
+  salesEntries     SalesEntry[]
+  recordedPayments Payment[]
+  activityLogs     ActivityLog[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+  @@index([tenantId, role])
+}
+
+enum UserRole {
+  TENANT_ADMIN
+  SALES_REP
+}
+
+// ─── CUSTOMER ──────────────────────────────────────────────
+model Customer {
+  id            String   @id @default(cuid())
+  tenantId      String
+  code          String
+  name          String
+  phone         String?
+  email         String?
+  city          String?
+  assignedRepId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedRep User?     @relation("RepCustomers", fields: [assignedRepId], references: [id])
+  debts        Debt[]
+  payments     Payment[]
+  salesEntries SalesEntry[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([tenantId, assignedRepId])
+}
+
+// ─── SALES TARGET ──────────────────────────────────────────
+model SalesTarget {
+  id               String   @id @default(cuid())
+  tenantId         String
+  userId           String
+  monthKey         String
+  revenueTarget    Float    @default(0)
+  salesCountTarget Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, monthKey])
+  @@index([tenantId, monthKey])
+}
+
+// ─── SALES ENTRY ───────────────────────────────────────────
+model SalesEntry {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String
+  customerId  String?
+  date        DateTime @db.Date
+  amount      Float
+  salesCount  Int      @default(1)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId, userId])
+  @@index([tenantId, date])
+}
+
+// ─── DEBT ──────────────────────────────────────────────────
+model Debt {
+  id           String     @id @default(cuid())
+  tenantId     String
+  customerId   String
+  documentNo   String?
+  amount       Float
+  dueDate      DateTime
+  documentDate DateTime
+  status       DebtStatus @default(PENDING)
+  description  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+}
+
+enum DebtStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+// ─── PAYMENT ───────────────────────────────────────────────
+model Payment {
+  id           String   @id @default(cuid())
+  tenantId     String
+  customerId   String
+  amount       Float
+  paymentDate  DateTime
+  method       String?
+  description  String?
+  recordedById String
+  createdAt    DateTime @default(now())
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  recordedBy User     @relation(fields: [recordedById], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, customerId])
+}
+
+// ─── SUBSCRIPTION PAYMENT ──────────────────────────────────
+model SubscriptionPayment {
+  id          String           @id @default(cuid())
+  tenantId    String
+  amount      Float            @default(100)
+  period      String
+  ibanRef     String?
+  status      SubPaymentStatus @default(PENDING)
+  confirmedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+enum SubPaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+// ─── ACTIVITY LOG ──────────────────────────────────────────
+model ActivityLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, createdAt])
+}
