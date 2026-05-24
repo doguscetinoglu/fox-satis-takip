@@ -42,7 +42,7 @@ export async function GET(req: Request) {
         salesCount: e.salesCount,
       })),
     })
-    return new Response(buffer, {
+    return new Response(buffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename="rapor.xlsx"',

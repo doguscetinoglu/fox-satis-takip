@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url)
   if (url.searchParams.get('template') === 'true') {
     const buffer = generateCustomerTemplate()
-    return new Response(buffer, {
+    return new Response(buffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename="musteri-sablonu.xlsx"',

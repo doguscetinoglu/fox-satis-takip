@@ -96,7 +96,7 @@ export function RaporlarPanel() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} />
                   <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} />
-                  <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }} />
+                  <Tooltip formatter={(v) => formatCurrency(Number(v))} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }} />
                   <Bar dataKey="amount" fill="#0071E3" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

@@ -6,7 +6,7 @@ type Tenant = {
   id: string; companyName: string; ownerName: string; phone: string
   planStatus: string; effectiveStatus: string; trialEndsAt: string
   _count: { users: number; customers: number }
-  subscriptionPayments: { status: string; period: string; createdAt: string }[]
+  subscriptionPayments: { id: string; status: string; period: string; createdAt: string }[]
 }
 
 const statusColors: Record<string, string> = {
