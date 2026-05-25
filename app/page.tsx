@@ -1,204 +1,483 @@
+'use client'
 import Link from 'next/link'
-import { TrendingUp, Users, Target, FileText, CheckCircle, ChevronRight, BarChart2, Bell, Shield } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from 'framer-motion'
+import {
+  TrendingUp, Users, Target, FileText, ChevronRight, BarChart2,
+  Bell, Shield, CheckCircle2, Zap, ArrowRight, Play, X,
+} from 'lucide-react'
+
+/* ─── Animated counter ─── */
+function Counter({ to, suffix = '', prefix = '' }: { to: number; suffix?: string; prefix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true })
+  const motionVal = useMotionValue(0)
+  const spring = useSpring(motionVal, { stiffness: 60, damping: 20 })
+  const [display, setDisplay] = useState(0)
+
+  useEffect(() => {
+    if (inView) motionVal.set(to)
+  }, [inView, to, motionVal])
+
+  useEffect(() => spring.on('change', v => setDisplay(Math.round(v))), [spring])
+
+  return <span ref={ref}>{prefix}{display.toLocaleString('tr-TR')}{suffix}</span>
+}
+
+/* ─── Fade-up wrapper ─── */
+function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-60px' })
+  return (
+    <motion.div ref={ref} initial={{ opacity: 0, y: 28 }} animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay, ease: 'easeOut' }} className={className}>
+      {children}
+    </motion.div>
+  )
+}
+
+/* ─── Mock dashboard preview ─── */
+function DashboardPreview() {
+  const bars = [35, 62, 48, 75, 58, 90, 72, 85, 65, 95, 80, 100]
+  return (
+    <div className="w-full max-w-xl mx-auto rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-sm shadow-2xl shadow-blue-500/10 overflow-hidden">
+      {/* Window chrome */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
+        <div className="w-3 h-3 rounded-full bg-red-500/70" />
+        <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+        <div className="w-3 h-3 rounded-full bg-green-500/70" />
+        <div className="mx-auto text-xs text-slate-500 font-mono">Fox Satış Takip · Dashboard</div>
+      </div>
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3 p-4">
+        {[
+          { label: 'Aylık Ciro', value: '₺184.600', pct: '+12%', color: 'text-blue-400' },
+          { label: 'Açık Borç', value: '₺32.400', pct: '8 müşteri', color: 'text-amber-400' },
+          { label: 'Hedef', value: '%78', pct: 'bu ay', color: 'text-emerald-400' },
+        ].map(s => (
+          <div key={s.label} className="rounded-xl bg-white/5 border border-white/5 p-3">
+            <p className="text-[10px] text-slate-500 mb-1">{s.label}</p>
+            <p className={`font-bold text-sm ${s.color}`}>{s.value}</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">{s.pct}</p>
+          </div>
+        ))}
+      </div>
+      {/* Chart */}
+      <div className="px-4 pb-4">
+        <p className="text-[10px] text-slate-500 mb-2">Bu ay günlük ciro</p>
+        <div className="flex items-end gap-1 h-16">
+          {bars.map((h, i) => (
+            <motion.div key={i} className="flex-1 rounded-sm bg-blue-500/60"
+              initial={{ height: 0 }} animate={{ height: `${h}%` }}
+              transition={{ delay: i * 0.04 + 0.3, duration: 0.5, ease: 'easeOut' }} />
+          ))}
+        </div>
+      </div>
+      {/* Rep list */}
+      <div className="border-t border-white/5 px-4 py-3 space-y-2">
+        {[
+          { name: 'Ali Yılmaz', pct: 94, color: 'bg-blue-500' },
+          { name: 'Elif Demir', pct: 72, color: 'bg-emerald-500' },
+          { name: 'Murat Can', pct: 51, color: 'bg-amber-500' },
+        ].map((r, i) => (
+          <div key={r.name} className="flex items-center gap-3">
+            <p className="text-[11px] text-slate-300 w-20 truncate">{r.name}</p>
+            <div className="flex-1 h-1.5 rounded-full bg-white/5">
+              <motion.div className={`h-full rounded-full ${r.color}`}
+                initial={{ width: 0 }} animate={{ width: `${r.pct}%` }}
+                transition={{ delay: i * 0.1 + 0.8, duration: 0.6, ease: 'easeOut' }} />
+            </div>
+            <p className="text-[11px] text-slate-400 w-7 text-right">{r.pct}%</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Feature card ─── */
+const features = [
+  { icon: TrendingUp, title: 'Ciro Takibi', desc: 'Günlük satış girişi, aylık hedef ve anlık tempo analizi.', color: 'blue', glow: 'rgba(59,130,246,0.3)' },
+  { icon: FileText, title: 'Borç Yönetimi', desc: 'Müşteri borçlarını vade yaşına göre renk kodlu takip edin.', color: 'violet', glow: 'rgba(139,92,246,0.3)' },
+  { icon: Users, title: 'Ekip Yönetimi', desc: 'Temsilci ekle, müşteri ata, aylık hedef belirle.', color: 'emerald', glow: 'rgba(16,185,129,0.3)' },
+  { icon: Target, title: 'Hedef Belirleme', desc: 'Her temsilci için ciro ve satış adedi hedefi koy.', color: 'orange', glow: 'rgba(249,115,22,0.3)' },
+  { icon: BarChart2, title: 'Detaylı Raporlar', desc: 'Tarih aralıklı grafikler. Excel dışa aktarma.', color: 'blue', glow: 'rgba(59,130,246,0.3)' },
+  { icon: Bell, title: 'Anlık Uyarılar', desc: 'Gecikmiş borç ve hedef gerisindeki temsilciler için alert.', color: 'red', glow: 'rgba(239,68,68,0.3)' },
+]
+
+const colorMap: Record<string, string> = {
+  blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+  violet: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+  emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  orange: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+  red: 'text-red-400 bg-red-500/10 border-red-500/20',
+}
+
+/* ─── FAQ ─── */
+const faqs = [
+  { q: 'Ödeme nasıl yapılıyor?', a: 'IBAN ile banka transferi. Ödemenizi sistem üzerinden bildirirsiniz, onaylarız.' },
+  { q: 'Kaç temsilci ekleyebilirim?', a: '100 TL aylık ücretle sınırsız temsilci ekleyebilirsiniz.' },
+  { q: 'Mevcut müşteri verilerimi nasıl aktarırım?', a: 'Excel şablonunu indirin, verilerinizi girin ve tek seferde yükleyin.' },
+  { q: 'Verilerim güvende mi?', a: 'Şifreli PostgreSQL veritabanı. Her firma kendi verisini görür, başka hiçbir firmaya erişim yok.' },
+  { q: 'İptal edebilir miyim?', a: 'İstediğiniz zaman. Sonraki dönemde ödeme alınmaz.' },
+]
 
 export default function LandingPage() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [showVideo, setShowVideo] = useState(false)
+
   return (
     <div className="min-h-screen bg-[#020617] text-white overflow-hidden">
-      {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl">
+
+      {/* ── Navbar ── */}
+      <motion.nav initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
+        className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
               <TrendingUp className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-lg">Fox Satış Takip</span>
+            <span className="font-bold text-lg tracking-tight">Fox Satış Takip</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/giris" className="text-sm text-slate-400 hover:text-white transition-colors">Giriş Yap</Link>
-            <Link href="/kayit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-medium transition-colors">
+          <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
+            <a href="#ozellikler" className="hover:text-white transition-colors">Özellikler</a>
+            <a href="#nasil-calisir" className="hover:text-white transition-colors">Nasıl çalışır?</a>
+            <a href="#fiyatlandirma" className="hover:text-white transition-colors">Fiyatlandırma</a>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/giris" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:block">Giriş Yap</Link>
+            <Link href="/kayit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-medium transition-all hover:shadow-lg hover:shadow-blue-500/25">
               Ücretsiz Başla
             </Link>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
-      {/* Hero */}
-      <section className="relative pt-32 pb-24 px-6">
+      {/* ── Hero ── */}
+      <section className="relative pt-32 pb-20 px-6 min-h-screen flex flex-col justify-center">
+        {/* Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="orb absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-600/15 blur-3xl" />
-          <div className="orb orb-delay-2 absolute top-1/2 -right-48 w-80 h-80 rounded-full bg-violet-600/15 blur-3xl" />
-          <div className="orb orb-delay-4 absolute -bottom-32 left-1/3 w-72 h-72 rounded-full bg-blue-400/10 blur-3xl" />
-          <div className="absolute inset-0 opacity-[0.02]" style={{
-            backgroundImage: `linear-gradient(rgba(0,113,227,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,113,227,0.5) 1px, transparent 1px)`,
+          <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.2, 0.15] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-blue-600/20 blur-3xl" />
+          <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.18, 0.1] }} transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+            className="absolute top-1/2 -right-40 w-[500px] h-[500px] rounded-full bg-violet-600/15 blur-3xl" />
+          <motion.div animate={{ scale: [1, 1.08, 1], opacity: [0.08, 0.15, 0.08] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 4 }}
+            className="absolute -bottom-40 left-1/3 w-[400px] h-[400px] rounded-full bg-blue-400/10 blur-3xl" />
+          {/* Grid */}
+          <div className="absolute inset-0 opacity-[0.025]" style={{
+            backgroundImage: `linear-gradient(rgba(59,130,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.5) 1px, transparent 1px)`,
             backgroundSize: '60px 60px',
           }} />
         </div>
-        <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm mb-8">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            7 gün ücretsiz deneme · Kredi kartı gerekmez
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            Satış ekibinizi{' '}
-            <span className="gradient-text">tek ekrandan</span>{' '}
-            yönetin
-          </h1>
-          <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Ciro takibi, borç yönetimi, hedef belirleme ve detaylı raporları tek bir platformda birleştirin. Saha satış ekipleriniz için tasarlandı.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/kayit" className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-lg transition-all hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2">
-              Hemen Başla <ChevronRight className="w-5 h-5" />
-            </Link>
-            <Link href="/giris" className="px-8 py-4 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 font-semibold text-lg transition-all">
-              Giriş Yap
-            </Link>
+
+        <div className="relative max-w-6xl mx-auto w-full">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left */}
+            <div>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-medium mb-8">
+                <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+                  className="w-2 h-2 rounded-full bg-blue-400 block" />
+                7 gün ücretsiz · Kredi kartı gerekmez
+              </motion.div>
+
+              <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6 tracking-tight">
+                Satış ekibinizi{' '}
+                <span className="relative">
+                  <span className="gradient-text">tek ekrandan</span>
+                  <motion.span initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.8, duration: 0.6 }}
+                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-violet-500 origin-left" />
+                </span>{' '}
+                yönetin
+              </motion.h1>
+
+              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-lg text-slate-400 mb-8 leading-relaxed">
+                Ciro takibi, borç yönetimi, hedef belirleme ve detaylı raporları tek platformda birleştirin.
+                Saha satış ekipleriniz için sıfırdan tasarlandı.
+              </motion.p>
+
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex flex-wrap gap-4 mb-10">
+                <Link href="/kayit" className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-base transition-all hover:shadow-xl hover:shadow-blue-500/30">
+                  Hemen Başla
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <button onClick={() => setShowVideo(true)}
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 font-medium text-base transition-all">
+                  <span className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+                    <Play className="w-3 h-3 fill-white ml-0.5" />
+                  </span>
+                  Demo izle
+                </button>
+              </motion.div>
+
+              {/* Trust badges */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                className="flex flex-wrap gap-4 text-sm text-slate-500">
+                {['SSL Şifreli', 'Türk lirası', 'Anlık destek'].map(t => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> {t}
+                  </span>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Right — Dashboard preview */}
+            <motion.div initial={{ opacity: 0, x: 40, rotateY: 10 }} animate={{ opacity: 1, x: 0, rotateY: 0 }}
+              transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+              className="hidden lg:block">
+              <DashboardPreview />
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* ── Stats band ── */}
+      <section className="py-14 border-y border-white/5 bg-white/[0.01]">
+        <div className="max-w-4xl mx-auto px-6">
+          <FadeUp>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              {[
+                { val: 200, suffix: '+', label: 'Aktif Firma' },
+                { val: 12000, suffix: '+', label: 'Satış Kaydı' },
+                { val: 100, suffix: ' ₺', prefix: '', label: 'Aylık Ücret' },
+                { val: 7, suffix: ' gün', label: 'Ücretsiz Deneme' },
+              ].map(s => (
+                <div key={s.label}>
+                  <p className="text-3xl font-extrabold text-white mb-1">
+                    <Counter to={s.val} suffix={s.suffix} prefix={s.prefix ?? ''} />
+                  </p>
+                  <p className="text-sm text-slate-500">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </FadeUp>
+        </div>
+      </section>
+
+      {/* ── Features ── */}
       <section className="py-24 px-6" id="ozellikler">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Her şey bir arada</h2>
-            <p className="text-slate-400 max-w-xl mx-auto">Satış sürecinizin her adımını takip edin</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { icon: TrendingUp, title: 'Ciro Takibi', desc: 'Günlük satış girişleri, aylık hedefler ve tempo analizi. Hedefe ne kadar kaldığını anlık görün.', color: 'blue' },
-              { icon: FileText, title: 'Borç Yönetimi', desc: 'Müşteri borçlarını vade yaşına göre renk kodlu tablolarla takip edin. 90+ gün gecikmeleri anında fark edin.', color: 'violet' },
-              { icon: Users, title: 'Ekip Yönetimi', desc: 'Satış temsilcilerinize müşteri atayın, aylık hedef belirleyin ve karşılaştırmalı performans raporları alın.', color: 'emerald' },
-              { icon: Target, title: 'Hedef Belirleme', desc: 'Her temsilci için aylık ciro ve satış adedi hedefi koyun. İlerlemeyi yüzde çubuklarıyla izleyin.', color: 'orange' },
-              { icon: BarChart2, title: 'Detaylı Raporlar', desc: 'Tarih aralıklı grafikler, Excel ve PDF dışa aktarma. Yönetim sunumlarınız için hazır formatlar.', color: 'blue' },
-              { icon: Bell, title: 'Anlık Uyarılar', desc: 'Gecikmiş borçlar, kritik müşteriler ve hedef gerisinde kalan temsilciler için otomatik uyarılar.', color: 'red' },
-            ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors group">
-                <div className={`w-12 h-12 rounded-xl bg-${color}-500/10 border border-${color}-500/20 flex items-center justify-center mb-4 group-hover:bg-${color}-500/20 transition-colors`}>
-                  <Icon className={`w-6 h-6 text-${color}-400`} />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
-              </div>
+          <FadeUp className="text-center mb-16">
+            <p className="text-blue-400 text-sm font-medium mb-3 uppercase tracking-widest">Özellikler</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Her şey bir arada</h2>
+            <p className="text-slate-400 max-w-xl mx-auto">Satış sürecinizin her adımını tek platformda yönetin</p>
+          </FadeUp>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map(({ icon: Icon, title, desc, color, glow }, i) => (
+              <FadeUp key={title} delay={i * 0.07}>
+                <motion.div whileHover={{ y: -4, boxShadow: `0 20px 40px ${glow}` }}
+                  className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] cursor-default group h-full">
+                  <div className={`w-11 h-11 rounded-xl border flex items-center justify-center mb-4 transition-colors group-hover:border-opacity-50 ${colorMap[color]}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+                </motion.div>
+              </FadeUp>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-24 px-6 bg-white/[0.01] border-y border-white/5">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Nasıl çalışır?</h2>
-          </div>
-          <div className="space-y-8">
+      {/* ── How it works ── */}
+      <section className="py-24 px-6 bg-white/[0.01] border-y border-white/5" id="nasil-calisir">
+        <div className="max-w-3xl mx-auto">
+          <FadeUp className="text-center mb-16">
+            <p className="text-blue-400 text-sm font-medium mb-3 uppercase tracking-widest">Süreç</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">4 adımda hazır</h2>
+          </FadeUp>
+
+          <div className="space-y-6">
             {[
-              { step: '01', title: 'Kayıt olun', desc: 'Telefon numaranızla 30 saniyede kayıt olun. 7 günlük ücretsiz denemeniz otomatik başlar.' },
-              { step: '02', title: 'Ekibinizi ekleyin', desc: 'Satış temsilcilerinizi sisteme ekleyin, müşterileri atayın ve aylık hedeflerini belirleyin.' },
-              { step: '03', title: 'Takibi başlatın', desc: 'Temsilciler günlük cirolarını girer, siz dashboard\'dan anlık performansı görürsünüz.' },
-              { step: '04', title: 'Raporları alın', desc: 'Excel veya PDF formatında haftalık/aylık raporlarınızı indirin, hedef karşılaştırmaları yapın.' },
-            ].map(({ step, title, desc }) => (
-              <div key={step} className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                  <span className="text-blue-400 font-bold text-sm">{step}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-1">{title}</h3>
-                  <p className="text-slate-400">{desc}</p>
-                </div>
-              </div>
+              { step: '01', title: 'Kayıt olun', desc: 'Telefon numaranızla 30 saniyede kayıt olun. 7 günlük ücretsiz deneme otomatik başlar.', icon: Zap },
+              { step: '02', title: 'Ekibinizi ekleyin', desc: 'Satış temsilcilerinizi sisteme ekleyin, müşterileri atayın, aylık hedefleri belirleyin.', icon: Users },
+              { step: '03', title: 'Takibi başlatın', desc: 'Temsilciler günlük cirolarını girer, siz dashboard\'dan anlık performansı görürsünüz.', icon: TrendingUp },
+              { step: '04', title: 'Raporları alın', desc: 'Excel veya PDF formatında raporlar indirin, haftalık/aylık karşılaştırmalar yapın.', icon: BarChart2 },
+            ].map(({ step, title, desc, icon: Icon }, i) => (
+              <FadeUp key={step} delay={i * 0.1}>
+                <motion.div whileHover={{ x: 4 }} className="flex gap-5 items-start group">
+                  <div className="flex-shrink-0 relative">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                      <Icon className="w-5 h-5 text-blue-400" />
+                    </div>
+                    {i < 3 && <div className="absolute left-1/2 top-12 -translate-x-1/2 w-px h-6 bg-gradient-to-b from-blue-500/30 to-transparent" />}
+                  </div>
+                  <div className="pt-2">
+                    <span className="text-xs font-mono text-blue-400/60 mb-1 block">{step}</span>
+                    <h3 className="font-semibold text-lg mb-1">{title}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+                  </div>
+                </motion.div>
+              </FadeUp>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* ── Pricing ── */}
       <section className="py-24 px-6" id="fiyatlandirma">
-        <div className="max-w-lg mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Sade fiyatlandırma</h2>
-            <p className="text-slate-400">Tek plan, tüm özellikler</p>
-          </div>
-          <div className="p-8 rounded-2xl border border-blue-500/30 bg-blue-500/5 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-blue-600 text-xs font-semibold">
-              7 GÜN ÜCRETSİZ
-            </div>
-            <div className="text-center mb-8">
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-bold">100</span>
-                <span className="text-xl text-slate-400">₺</span>
+        <div className="max-w-md mx-auto">
+          <FadeUp className="text-center mb-12">
+            <p className="text-blue-400 text-sm font-medium mb-3 uppercase tracking-widest">Fiyatlandırma</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Sade fiyatlandırma</h2>
+            <p className="text-slate-400">Tek plan, tüm özellikler, sınırsız kullanım</p>
+          </FadeUp>
+
+          <FadeUp delay={0.1}>
+            <motion.div whileHover={{ scale: 1.01 }}
+              className="relative p-8 rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/10 to-blue-500/5">
+              {/* Badge */}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 rounded-full bg-blue-600 text-xs font-bold tracking-wide shadow-lg shadow-blue-500/30">
+                7 GÜN ÜCRETSİZ
               </div>
-              <p className="text-slate-400 mt-1">aylık · sınırsız temsilci</p>
-            </div>
-            <ul className="space-y-3 mb-8">
-              {[
-                'Sınırsız satış temsilcisi',
-                'Sınırsız müşteri kaydı',
-                'Günlük ciro takibi',
-                'Borç yaşlandırma analizi',
-                'Aylık hedef belirleme',
-                'Excel & PDF raporlar',
-                'Excel ile toplu veri yükleme',
-                '7/24 destek',
-              ].map(f => (
-                <li key={f} className="flex items-center gap-3 text-sm">
-                  <CheckCircle className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/kayit" className="block w-full py-3 text-center rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold transition-colors">
-              7 Gün Ücretsiz Başla
-            </Link>
-            <p className="text-center text-xs text-slate-500 mt-4">
-              Ödeme IBAN ile yapılır · İptal istediğiniz zaman
-            </p>
-          </div>
+
+              <div className="text-center mb-8 pt-4">
+                <div className="flex items-baseline justify-center gap-1.5">
+                  <span className="text-6xl font-extrabold tracking-tight">100</span>
+                  <div>
+                    <span className="text-2xl text-slate-400 font-semibold">₺</span>
+                    <p className="text-xs text-slate-500">/ay</p>
+                  </div>
+                </div>
+                <p className="text-slate-400 mt-2 text-sm">Sınırsız temsilci · Tüm özellikler</p>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  'Sınırsız satış temsilcisi',
+                  'Sınırsız müşteri kaydı',
+                  'Günlük ciro takibi',
+                  'Borç yaşlandırma analizi',
+                  'Aylık hedef belirleme',
+                  'Excel dışa aktarma',
+                  'Excel ile toplu veri yükleme',
+                  '7/24 destek',
+                ].map(f => (
+                  <li key={f} className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Link href="/kayit" className="block w-full py-3.5 text-center rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold transition-all hover:shadow-lg hover:shadow-blue-500/30">
+                7 Gün Ücretsiz Başla
+              </Link>
+              <p className="text-center text-xs text-slate-500 mt-4">
+                IBAN ile ödeme · İptal istediğiniz zaman
+              </p>
+            </motion.div>
+          </FadeUp>
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* ── FAQ ── */}
       <section className="py-24 px-6 bg-white/[0.01] border-t border-white/5">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Sık sorulan sorular</h2>
-          <div className="space-y-4">
-            {[
-              { q: 'Ödeme nasıl yapılıyor?', a: 'IBAN ile banka transferi yapılır. Ödemenizi sistem üzerinden bildirirsiniz, biz onaylarız.' },
-              { q: 'Kaç temsilci ekleyebilirim?', a: 'Sınır yok. 100 TL aylık ücretle istediğiniz kadar temsilci ekleyebilirsiniz.' },
-              { q: 'Mevcut müşteri verilerimi nasıl aktarırım?', a: 'Excel şablonunu indirin, verilerinizi girin ve sisteme tek seferde yükleyin.' },
-              { q: 'Verilerim güvende mi?', a: 'Verileriniz şifreli Neon PostgreSQL veritabanında saklanır. Her firma kendi verisini görür.' },
-              { q: 'İptal edebilir miyim?', a: 'İstediğiniz zaman. Sonraki ödeme döneminde işlem yapılmaz.' },
-            ].map(({ q, a }) => (
-              <details key={q} className="group p-5 rounded-xl border border-white/5 bg-white/[0.02] cursor-pointer">
-                <summary className="font-medium list-none flex items-center justify-between">
-                  {q}
-                  <ChevronRight className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-90" />
-                </summary>
-                <p className="mt-3 text-slate-400 text-sm leading-relaxed">{a}</p>
-              </details>
+          <FadeUp className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold">Sık sorulan sorular</h2>
+          </FadeUp>
+
+          <div className="space-y-3">
+            {faqs.map(({ q, a }, i) => (
+              <FadeUp key={q} delay={i * 0.05}>
+                <div className="rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden">
+                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.03] transition-colors cursor-pointer">
+                    <span className="font-medium text-sm sm:text-base">{q}</span>
+                    <motion.span animate={{ rotate: openFaq === i ? 90 : 0 }} transition={{ duration: 0.2 }}
+                      className="text-slate-400 flex-shrink-0 ml-4">
+                      <ChevronRight className="w-4 h-4" />
+                    </motion.span>
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === i && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}>
+                        <p className="px-5 pb-4 text-sm text-slate-400 leading-relaxed">{a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </FadeUp>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ── Final CTA ── */}
       <section className="py-24 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="p-10 rounded-2xl border border-blue-500/20 bg-blue-500/5">
-            <Shield className="w-12 h-12 text-blue-400 mx-auto mb-6" />
-            <h2 className="text-3xl font-bold mb-4">Hemen başlayın</h2>
-            <p className="text-slate-400 mb-8">7 gün boyunca tüm özellikleri ücretsiz kullanın. Kredi kartı gerekmez.</p>
-            <Link href="/kayit" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-lg transition-all hover:shadow-lg hover:shadow-blue-500/25">
-              Ücretsiz Hesap Oluştur <ChevronRight className="w-5 h-5" />
-            </Link>
+        <FadeUp>
+          <div className="max-w-2xl mx-auto text-center">
+            <motion.div whileHover={{ scale: 1.01 }}
+              className="relative p-10 sm:p-14 rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 via-violet-500/5 to-transparent overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none">
+                <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 5, repeat: Infinity }}
+                  className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-blue-500/10 blur-3xl" />
+              </div>
+              <div className="relative">
+                <Shield className="w-10 h-10 text-blue-400 mx-auto mb-6" />
+                <h2 className="text-3xl sm:text-4xl font-extrabold mb-4">Hemen başlayın</h2>
+                <p className="text-slate-400 mb-8 leading-relaxed">
+                  7 gün boyunca tüm özellikleri ücretsiz kullanın.<br />Kredi kartı gerekmez, kurulum yok.
+                </p>
+                <Link href="/kayit"
+                  className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-lg transition-all hover:shadow-xl hover:shadow-blue-500/30">
+                  Ücretsiz Hesap Oluştur
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </motion.div>
           </div>
-        </div>
+        </FadeUp>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-6 text-center text-slate-500 text-sm">
-        © {new Date().getFullYear()} Fox Satış Takip · Tüm hakları saklıdır
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/5 py-8 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+              <TrendingUp className="w-3 h-3 text-white" />
+            </div>
+            <span>Fox Satış Takip</span>
+          </div>
+          <p>© {new Date().getFullYear()} Tüm hakları saklıdır</p>
+          <div className="flex gap-5">
+            <Link href="/giris" className="hover:text-slate-300 transition-colors">Giriş Yap</Link>
+            <Link href="/kayit" className="hover:text-slate-300 transition-colors">Kayıt Ol</Link>
+          </div>
+        </div>
       </footer>
+
+      {/* ── Demo modal (placeholder) ── */}
+      <AnimatePresence>
+        {showVideo && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+            onClick={() => setShowVideo(false)}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="relative w-full max-w-2xl rounded-2xl border border-white/10 bg-slate-900 p-8 text-center">
+              <button onClick={() => setShowVideo(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+              <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                <Play className="w-6 h-6 text-blue-400 fill-blue-400" />
+              </div>
+              <h3 className="font-bold text-xl mb-2">Demo videosu yakında</h3>
+              <p className="text-slate-400 mb-6">Sistemi hemen denemek için 7 günlük ücretsiz hesap oluşturun.</p>
+              <Link href="/kayit" onClick={() => setShowVideo(false)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold transition-all">
+                Ücretsiz Başla <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
