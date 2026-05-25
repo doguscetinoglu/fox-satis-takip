@@ -6,9 +6,15 @@ import { z } from 'zod'
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
-  phone: z.string().optional(),
-  email: z.string().optional(),
-  city: z.string().optional(),
+  type: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  taxNumber: z.string().nullable().optional(),
+  taxOffice: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  district: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  postalCode: z.string().nullable().optional(),
   assignedRepId: z.string().nullable().optional(),
 })
 

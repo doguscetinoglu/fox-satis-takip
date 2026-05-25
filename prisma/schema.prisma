@@ -73,9 +73,15 @@ model Customer {
   tenantId      String
   code          String
   name          String
+  type          String?  // BIREYSEL | KURUMSAL
   phone         String?
   email         String?
+  taxNumber     String?  // Vergi No veya TC Kimlik No
+  taxOffice     String?  // Vergi Dairesi
+  address       String?  // Adres
+  district      String?  // İlçe
   city          String?
+  postalCode    String?  // Posta Kodu
   assignedRepId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
