@@ -16,11 +16,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background">
+      <div className="flex min-h-screen">
         <AdminSidebar name={session.name} company={tenant?.companyName ?? ''} />
         <div className="flex-1 flex flex-col min-w-0">
           {trialDays !== null && <TrialBanner daysRemaining={trialDays} />}
-          <header className="flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-border gap-3">
+          <header className="header-glass flex items-center justify-between px-4 md:px-6 py-3.5 border-b gap-3 sticky top-0 z-30">
             <AdminMenuButton />
             <h1 className="text-sm font-medium text-muted-foreground truncate">{tenant?.companyName ?? 'Fox Satış Takip'}</h1>
             <ThemeToggle />

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Users, UserCheck, Target, FileWarning,
-  CreditCard, BarChart2, BadgeDollarSign, TrendingUp, LogOut, X, Menu
+  CreditCard, BarChart2, BadgeDollarSign, TrendingUp, LogOut, X, Menu, ShoppingCart
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -14,6 +14,7 @@ const nav = [
   { href: '/admin/temsilciler', label: 'Temsilciler', icon: Users },
   { href: '/admin/musteriler', label: 'Müşteriler', icon: UserCheck },
   { href: '/admin/hedefler', label: 'Hedefler', icon: Target },
+  { href: '/admin/satislar', label: 'Satışlar', icon: ShoppingCart },
   { href: '/admin/borclar', label: 'Borçlar', icon: FileWarning },
   { href: '/admin/odemeler', label: 'Ödemeler', icon: CreditCard },
   { href: '/admin/raporlar', label: 'Raporlar', icon: BarChart2 },
@@ -23,7 +24,7 @@ const nav = [
 export function AdminMenuButton() {
   const { toggle } = useSidebar()
   return (
-    <button onClick={toggle} className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors">
+    <button onClick={toggle} className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
       <Menu className="w-5 h-5" />
     </button>
   )
@@ -42,14 +43,14 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b" style={{ borderColor: 'var(--nav-border)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/30">
             <TrendingUp className="w-4 h-4 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{company}</p>
-            <p className="text-xs text-slate-500 truncate">{name}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{company}</p>
+            <p className="text-xs text-muted-foreground truncate">{name}</p>
           </div>
         </div>
       </div>
@@ -59,9 +60,7 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
           const active = pathname === href || (href !== '/admin' && pathname.startsWith(href))
           return (
             <Link key={href} href={href} onClick={close}
-              className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
-                active ? 'bg-blue-600/20 text-blue-400 font-medium' : 'text-slate-400 hover:text-white hover:bg-white/5'
-              )}>
+              className={cn('nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm', active && 'active')}>
               <Icon className="w-4 h-4 flex-shrink-0" />
               {label}
             </Link>
@@ -69,9 +68,8 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
         })}
       </nav>
 
-      <div className="p-3 border-t border-white/5">
-        <button onClick={logout}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full">
+      <div className="p-3 border-t" style={{ borderColor: 'var(--nav-border)' }}>
+        <button onClick={logout} className="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:!text-red-500 dark:hover:!text-red-400 hover:!bg-red-500/10 w-full cursor-pointer">
           <LogOut className="w-4 h-4" />
           Çıkış Yap
         </button>
@@ -82,7 +80,7 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 flex-shrink-0 bg-card border-r border-border flex-col h-screen sticky top-0">
+      <aside className="sidebar-glass hidden md:flex w-56 flex-shrink-0 border-r flex-col h-screen sticky top-0">
         {sidebarContent}
       </aside>
 
@@ -95,17 +93,17 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={close}
             />
             <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="relative w-64 bg-card border-r border-border flex flex-col h-full shadow-2xl"
+              transition={{ type: 'spring' as const, stiffness: 320, damping: 32 }}
+              className="sidebar-glass relative w-64 border-r flex flex-col h-full shadow-2xl"
             >
-              <button onClick={close} className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+              <button onClick={close} className="nav-item absolute top-4 right-4 p-1.5 rounded-lg cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
               {sidebarContent}

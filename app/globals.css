@@ -12,18 +12,28 @@
   --color-primary: var(--primary);
 }
 
+/* ─── LIGHT MODE (glassmorphism) ─────────────────────────── */
 :root {
-  --background: #f8fafc;
+  --background: #eef4ff;
   --foreground: #0f172a;
-  --card: #ffffff;
+  --card: rgba(255, 255, 255, 0.72);
   --card-foreground: #0f172a;
-  --border: #e2e8f0;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --border: rgba(148, 163, 184, 0.22);
+  --muted: rgba(248, 250, 255, 0.80);
+  --muted-foreground: #475569;
   --accent: #0071E3;
-  --primary: #0055b3;
+  --primary: #1d4ed8;
+
+  --sidebar-bg: rgba(255, 255, 255, 0.88);
+  --header-bg: rgba(255, 255, 255, 0.82);
+  --nav-text: #475569;
+  --nav-text-active: #1d4ed8;
+  --nav-bg-active: rgba(37, 99, 235, 0.10);
+  --nav-bg-hover: rgba(0, 0, 0, 0.05);
+  --nav-border: rgba(226, 232, 240, 0.6);
 }
 
+/* ─── DARK MODE ──────────────────────────────────────────── */
 .dark {
   --background: #020617;
   --foreground: #f1f5f9;
@@ -34,29 +44,78 @@
   --muted-foreground: #94a3b8;
   --accent: #0071E3;
   --primary: #60A5FA;
+
+  --sidebar-bg: #0f172a;
+  --header-bg: rgba(2, 6, 23, 0.90);
+  --nav-text: #94a3b8;
+  --nav-text-active: #60a5fa;
+  --nav-bg-active: rgba(59, 130, 246, 0.15);
+  --nav-bg-hover: rgba(255, 255, 255, 0.05);
+  --nav-border: rgba(30, 41, 59, 1);
 }
 
 * { border-color: var(--border); }
 
+/* Light: beautiful gradient background */
+html:not(.dark) {
+  background: linear-gradient(135deg,
+    #dbeafe 0%, #eff6ff 18%, #f0f9ff 35%,
+    #f8fafc 52%, #f5f3ff 70%, #ede9fe 85%, #ddd6fe 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+html.dark {
+  background: #020617;
+}
+
 body {
-  background: var(--background);
+  background: transparent;
   color: var(--foreground);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
+/* ─── GLASS UTILITY ─────────────────────────────────────── */
 .glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
 }
 
-.dark .glass {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* ─── SIDEBAR / HEADER ──────────────────────────────────── */
+.sidebar-glass {
+  background: var(--sidebar-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: var(--nav-border);
 }
 
+.header-glass {
+  background: var(--header-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: var(--nav-border);
+}
+
+/* ─── NAV ITEMS ─────────────────────────────────────────── */
+.nav-item {
+  color: var(--nav-text);
+  transition: background-color 0.15s, color 0.15s;
+}
+.nav-item:hover {
+  color: var(--foreground);
+  background: var(--nav-bg-hover);
+}
+.nav-item.active {
+  color: var(--nav-text-active);
+  background: var(--nav-bg-active);
+  font-weight: 500;
+}
+
+/* ─── GRADIENT TEXT ─────────────────────────────────────── */
 .gradient-text {
   background: linear-gradient(135deg, #0071E3, #60A5FA, #a78bfa);
   -webkit-background-clip: text;
@@ -64,10 +123,12 @@ body {
   background-clip: text;
 }
 
+/* ─── SCROLLBAR ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
+/* ─── ANIMATIONS ────────────────────────────────────────── */
 @keyframes alarm-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -92,7 +153,7 @@ body {
   100% { background-position: 200% 0; }
 }
 .shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }

@@ -8,15 +8,14 @@ export default async function TemsilciLayout({ children }: { children: React.Rea
   const tenant = await prisma.tenant.findUnique({ where: { id: session.tenantId } })
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen">
       <TemsilciSidebar name={session.name} company={tenant?.companyName ?? ''} />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-border">
+        <header className="header-glass flex items-center justify-between px-4 md:px-6 py-3.5 border-b sticky top-0 z-30">
           <div className="md:hidden w-9" />
           <h1 className="text-sm font-medium text-muted-foreground truncate">{tenant?.companyName}</h1>
           <ThemeToggle />
         </header>
-        {/* pb-16 for mobile bottom nav clearance */}
         <main className="flex-1 p-3 md:p-6 pb-20 md:pb-6 overflow-auto">{children}</main>
       </div>
     </div>

@@ -1,11 +1,12 @@
 'use client'
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, AlertTriangle, Users, FileSearch } from 'lucide-react'
+import { TrendingUp, AlertTriangle, Users, FileSearch, ShoppingCart } from 'lucide-react'
 import { CiroTakibiRaporu } from './raporlar/CiroTakibiRaporu'
 import { BorcYaslandirmaRaporu } from './raporlar/BorcYaslandirmaRaporu'
 import { TemsilciPerformansRaporu } from './raporlar/TemsilciPerformansRaporu'
 import { MusteriAnaliziRaporu } from './raporlar/MusteriAnaliziRaporu'
+import { SatislarRaporu } from './raporlar/SatislarRaporu'
 
 type Rapor = {
   id: string; title: string; subtitle: string
@@ -14,13 +15,15 @@ type Rapor = {
 }
 
 const RAPORLAR: Rapor[] = [
-  { id: 'ciro',     title: 'Ciro Takibi',         subtitle: 'Hedef & günlük trend',      icon: TrendingUp,   color: 'blue',    component: <CiroTakibiRaporu /> },
-  { id: 'borc',     title: 'Borç Yaşlandırma',    subtitle: '0-30 · 30-60 · 60-90 · 90+', icon: AlertTriangle, color: 'red',   component: <BorcYaslandirmaRaporu /> },
-  { id: 'temsilci', title: 'Temsilci Performansı', subtitle: 'Karşılaştırma & sıralama',  icon: Users,        color: 'violet',  component: <TemsilciPerformansRaporu /> },
+  { id: 'satis',    title: 'Satışlar Raporu',      subtitle: 'Temsilci & günlük satış',   icon: ShoppingCart, color: 'teal',   component: <SatislarRaporu /> },
+  { id: 'ciro',     title: 'Ciro Takibi',          subtitle: 'Hedef & günlük trend',      icon: TrendingUp,   color: 'blue',   component: <CiroTakibiRaporu /> },
+  { id: 'borc',     title: 'Borç Yaşlandırma',     subtitle: '0-30 · 30-60 · 60-90 · 90+', icon: AlertTriangle, color: 'red', component: <BorcYaslandirmaRaporu /> },
+  { id: 'temsilci', title: 'Temsilci Performansı', subtitle: 'Karşılaştırma & sıralama',  icon: Users,        color: 'violet', component: <TemsilciPerformansRaporu /> },
   { id: 'musteri',  title: 'Müşteri Analizi',      subtitle: 'Ciro & borç dağılımı',      icon: FileSearch,   color: 'emerald', component: <MusteriAnaliziRaporu /> },
 ]
 
 const COLOR_MAP: Record<string, { grad: string; glow: string; border: string; text: string; activeBg: string; pill: string }> = {
+  teal:    { grad: 'from-teal-600 to-teal-800',       glow: 'shadow-teal-500/40',    border: 'border-teal-500/50',    text: 'text-teal-400',    activeBg: 'bg-teal-500/10',    pill: 'bg-teal-600 text-white' },
   blue:    { grad: 'from-blue-600 to-blue-800',       glow: 'shadow-blue-500/40',    border: 'border-blue-500/50',    text: 'text-blue-400',    activeBg: 'bg-blue-500/10',    pill: 'bg-blue-600 text-white' },
   red:     { grad: 'from-red-600 to-red-800',         glow: 'shadow-red-500/40',     border: 'border-red-500/50',     text: 'text-red-400',     activeBg: 'bg-red-500/10',     pill: 'bg-red-600 text-white' },
   violet:  { grad: 'from-violet-600 to-violet-800',   glow: 'shadow-violet-500/40',  border: 'border-violet-500/50',  text: 'text-violet-400',  activeBg: 'bg-violet-500/10',  pill: 'bg-violet-600 text-white' },
