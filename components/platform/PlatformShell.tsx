@@ -93,6 +93,8 @@ export function PlatformShell() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editTenant, setEditTenant] = useState<TenantFull | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const router = useRouter()
 
   const load = async (quiet = false) => {
@@ -106,19 +108,38 @@ export function PlatformShell() {
   useEffect(() => { load() }, [])
 
   async function changeStatus(id: string, planStatus: string) {
-    await fetch(`/api/platform/tenantlar/${id}`, {
+    setBusyId(id)
+    const res = await fetch(`/api/platform/tenantlar/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ planStatus }),
     })
-    load(true)
+    setBusyId(null)
+    if (res.ok) {
+      showToast('Durum güncellendi', true)
+      load(true)
+    } else {
+      showToast('Güncelleme başarısız', false)
+    }
+  }
+
+  function showToast(msg: string, ok: boolean) {
+    setToast({ msg, ok })
+    setTimeout(() => setToast(null), 3000)
   }
 
   async function confirmPayment(paymentId: string, action: 'confirm' | 'reject') {
-    await fetch(`/api/platform/abonelik/${paymentId}`, {
+    setBusyId(paymentId)
+    const res = await fetch(`/api/platform/abonelik/${paymentId}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     })
-    load(true)
+    setBusyId(null)
+    if (res.ok) {
+      showToast(action === 'confirm' ? 'Ödeme onaylandı' : 'Ödeme reddedildi', true)
+      load(true)
+    } else {
+      showToast('İşlem başarısız', false)
+    }
   }
 
   async function logout() {
@@ -142,6 +163,18 @@ export function PlatformShell() {
 
   return (
     <>
+    {/* ── Toast ── */}
+    <AnimatePresence>
+      {toast && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-xl text-sm font-medium border backdrop-blur-sm
+            ${toast.ok ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : 'bg-red-500/20 border-red-500/40 text-red-300'}`}>
+          {toast.ok ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+          {toast.msg}
+        </motion.div>
+      )}
+    </AnimatePresence>
+
     {/* ── Edit Tenant Modal ── */}
     <AnimatePresence>
       {editTenant && (
@@ -530,39 +563,59 @@ export function PlatformShell() {
                   ) : (
                     <div className="space-y-3">
                       {stats.attentionItems.map((item, i) => {
-                        const config = {
+                        const cfgMap = {
                           new:      { icon: Zap,           color: 'border-blue-500/25 bg-blue-500/5',   badge: 'bg-blue-400/15 text-blue-400 border-blue-400/30',   label: 'Yeni Kayıt' },
                           expiring: { icon: Clock,         color: 'border-amber-500/25 bg-amber-500/5', badge: 'bg-amber-400/15 text-amber-400 border-amber-400/30', label: 'Süresi Bitiyor' },
                           suspended:{ icon: AlertTriangle, color: 'border-red-500/25 bg-red-500/5',     badge: 'bg-red-400/15 text-red-400 border-red-400/30',       label: 'Askıda' },
-                        }[item.type]
+                        }
+                        const config = cfgMap[item.type] ?? cfgMap.new
                         const Icon = config.icon
+                        const busy = busyId === item.id
                         return (
                           <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                            className={`flex items-center gap-5 p-5 rounded-2xl border ${config.color} transition-colors`}>
-                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-                              <Icon className="w-5 h-5 text-slate-300" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-semibold text-white">{item.companyName}</p>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${config.badge}`}>{config.label}</span>
+                            className={`flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-2xl border ${config.color} transition-colors`}>
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                                <Icon className="w-5 h-5 text-slate-300" />
                               </div>
-                              <p className="text-sm text-slate-400">{item.ownerName} · {item.phone}</p>
-                              {item.type === 'expiring' && (
-                                <p className="text-xs text-amber-400/80 mt-1">Deneme bitiş: {formatDate(item.trialEndsAt)}</p>
-                              )}
-                              {item.type === 'new' && (
-                                <p className="text-xs text-blue-400/80 mt-1">Kayıt tarihi: {formatDate(item.createdAt)}</p>
-                              )}
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-semibold text-white">{item.companyName}</p>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${config.badge}`}>{config.label}</span>
+                                </div>
+                                <p className="text-sm text-slate-400">{item.ownerName} · {item.phone}</p>
+                                {item.type === 'expiring' && (
+                                  <p className="text-xs text-amber-400/80 mt-0.5">Deneme bitiş: {formatDate(item.trialEndsAt)}</p>
+                                )}
+                                {item.type === 'new' && (
+                                  <p className="text-xs text-blue-400/80 mt-0.5">Kayıt tarihi: {formatDate(item.createdAt)}</p>
+                                )}
+                              </div>
                             </div>
-                            <select defaultValue={item.type === 'suspended' ? 'SUSPENDED' : 'TRIAL'}
-                              onChange={e => changeStatus(item.id, e.target.value)}
-                              className="text-xs px-2 py-1.5 rounded-lg bg-slate-700 border border-white/10 text-slate-300 focus:outline-none cursor-pointer">
-                              <option value="TRIAL">Deneme</option>
-                              <option value="ACTIVE">Aktif Yap</option>
-                              <option value="SUSPENDED">Askıya Al</option>
-                              <option value="CANCELLED">İptal</option>
-                            </select>
+
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
+                              {item.type === 'suspended' ? (
+                                <>
+                                  <ActionBtn onClick={() => changeStatus(item.id, 'ACTIVE')} busy={busy} variant="green">Aktive Et</ActionBtn>
+                                  <ActionBtn onClick={() => changeStatus(item.id, 'CANCELLED')} busy={busy} variant="red">İptal Et</ActionBtn>
+                                </>
+                              ) : item.type === 'expiring' ? (
+                                <>
+                                  <ActionBtn onClick={() => changeStatus(item.id, 'ACTIVE')} busy={busy} variant="green">Aktive Et</ActionBtn>
+                                  <ActionBtn onClick={() => changeStatus(item.id, 'SUSPENDED')} busy={busy} variant="red">Askıya Al</ActionBtn>
+                                </>
+                              ) : (
+                                <>
+                                  <ActionBtn onClick={() => changeStatus(item.id, 'ACTIVE')} busy={busy} variant="green">Aktive Et</ActionBtn>
+                                  <ActionBtn onClick={() => changeStatus(item.id, 'SUSPENDED')} busy={busy} variant="ghost">Askıya Al</ActionBtn>
+                                </>
+                              )}
+                              <button onClick={() => setEditTenant(stats.tenants.find(t => t.id === item.id) ?? null)}
+                                className="p-2 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 transition-colors cursor-pointer" title="Düzenle">
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </motion.div>
                         )
                       })}
@@ -577,6 +630,29 @@ export function PlatformShell() {
       </main>
     </div>
     </>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+function ActionBtn({ onClick, busy, variant, children }: {
+  onClick: () => void
+  busy: boolean
+  variant: 'green' | 'red' | 'ghost'
+  children: React.ReactNode
+}) {
+  const cls = {
+    green: 'bg-emerald-600 hover:bg-emerald-500 text-white',
+    red:   'bg-red-600/30 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 hover:border-transparent',
+    ghost: 'bg-slate-700/60 hover:bg-slate-700 text-slate-300 border border-white/10',
+  }[variant]
+  return (
+    <button onClick={onClick} disabled={busy}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer disabled:opacity-50 ${cls}`}>
+      {busy
+        ? <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+        : null}
+      {children}
+    </button>
   )
 }
 
