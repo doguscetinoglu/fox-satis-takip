@@ -59,8 +59,7 @@ function StatCard({ title, value, subtitle, icon: Icon, color, delay = 0, trend 
   return (
     <motion.div {...fadeUp(delay)}
       whileHover={{ y: -3, transition: { duration: 0.2 } }}
-      className={`relative p-5 rounded-2xl border color-card-${color} overflow-hidden cursor-default`}>
-      <div className="absolute inset-0 shimmer pointer-events-none opacity-30 dark:opacity-50" />
+      className={`relative p-5 rounded-2xl border color-card-${color} cursor-default`}>
       <div className="flex items-start justify-between mb-4">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
         <div className={`p-2 rounded-xl color-icon-${color}`}>

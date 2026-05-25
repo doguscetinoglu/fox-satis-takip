@@ -379,3 +379,95 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .fade-up { animation: fadeUp 0.4s ease forwards; }
+
+/* ─── LIVE DATA REFRESH SWEEP ───────────────────────────── */
+/*
+ * A diagonal light streak sweeps across each stat card once every ~7 s.
+ * Cards of different colors get staggered delays so they fire in sequence,
+ * giving the impression of continuous real-time data updates.
+ * Implemented purely in CSS via ::after — no JS, no extra markup needed.
+ */
+
+@keyframes live-sweep {
+  0%        { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
+  6%        { opacity: 1; }
+  44%       { opacity: 1; }
+  50%, 100% { transform: translateX(250%)  skewX(-12deg); opacity: 0; }
+}
+
+/* Ensure the pseudo-element is clipped inside the card */
+.color-card-blue,
+.color-card-emerald,
+.color-card-violet,
+.color-card-red,
+.color-card-amber,
+.color-card-teal {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* The sweep beam — common styles */
+.color-card-blue::after,
+.color-card-emerald::after,
+.color-card-violet::after,
+.color-card-red::after,
+.color-card-amber::after,
+.color-card-teal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 55%;
+  background: linear-gradient(
+    to right,
+    transparent  0%,
+    rgba(255, 255, 255, 0.12) 35%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.12) 65%,
+    transparent  100%
+  );
+  mix-blend-mode: overlay;
+  animation: live-sweep 7s ease-in-out infinite;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Light mode: brighter beam (overlay on near-white bg needs more punch) */
+:root:not(.dark) .color-card-blue::after,
+:root:not(.dark) .color-card-emerald::after,
+:root:not(.dark) .color-card-violet::after,
+:root:not(.dark) .color-card-red::after,
+:root:not(.dark) .color-card-amber::after,
+:root:not(.dark) .color-card-teal::after {
+  background: linear-gradient(
+    to right,
+    transparent  0%,
+    rgba(255, 255, 255, 0.30) 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.30) 65%,
+    transparent  100%
+  );
+}
+
+/* Staggered delays — one card lights up roughly every second */
+.color-card-blue::after    { animation-delay:  0.0s; }
+.color-card-emerald::after { animation-delay:  1.2s; }
+.color-card-violet::after  { animation-delay:  2.4s; }
+.color-card-red::after     { animation-delay:  3.6s; }
+.color-card-amber::after   { animation-delay:  4.8s; }
+.color-card-teal::after    { animation-delay:  6.0s; }
+
+/* Live-dot pulse for the icon badge — subtle "online" indicator */
+@keyframes live-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.50); }
+  50%      { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.00); }
+}
+
+.color-icon-blue,
+.color-icon-emerald,
+.color-icon-violet,
+.color-icon-red,
+.color-icon-amber,
+.color-icon-teal {
+  animation: live-dot 2.8s ease-in-out infinite;
+}
