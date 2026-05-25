@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Upload, Download, X, Search, SlidersHorizontal,
   TrendingUp, ShoppingCart, BarChart3, Zap,
-  CheckCircle2, AlertTriangle, ChevronDown, ChevronUp,
+  CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Trash2,
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
@@ -100,9 +100,11 @@ export function SatislarPanel() {
     date: new Date().toISOString().split('T')[0], description: '',
     documentNo: '', dueDate: defaultDueDate(),
   })
-  const [saving,  setSaving]  = useState(false)
-  const [formErr, setFormErr] = useState('')
-  const [saved,   setSaved]   = useState(false)
+  const [saving,    setSaving]    = useState(false)
+  const [formErr,   setFormErr]   = useState('')
+  const [saved,     setSaved]     = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmId,  setConfirmId]  = useState<string | null>(null)
 
   // Import
   const [importResult, setImportResult] = useState<{ inserted?: number; errors?: unknown[] } | null>(null)
@@ -174,7 +176,7 @@ export function SatislarPanel() {
   const displayedSalesCount = displayed.reduce((s, e) => s + e.salesCount, 0)
   const activeFilters = [
     search, filterRep,
-    filterPeriod !== 'all' ? filterPeriod : '',
+    filterPeriod !== 'all' && filterPeriod !== 'month' ? filterPeriod : '',
   ].filter(Boolean).length
 
   function toggleSort(key: SortKey) {
@@ -190,7 +192,7 @@ export function SatislarPanel() {
   }
 
   function clearFilters() {
-    setSearch(''); setFilterRep(''); setFilterPeriod('month')
+    setSearch(''); setFilterRep(''); setFilterPeriod('month'); setCustomMonth(defaultMonth)
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -216,6 +218,14 @@ export function SatislarPanel() {
       }
     } catch { setFormErr('Bağlantı hatası') }
     finally { setSaving(false) }
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/admin/satislar/${id}`, { method: 'DELETE' })
+      if (res.ok) { setConfirmId(null); load() }
+    } finally { setDeletingId(null) }
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -484,6 +494,7 @@ export function SatislarPanel() {
                     <span className="flex items-center gap-1">Adet <SortIcon col="salesCount" /></span>
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Açıklama</th>
+                  <th className="w-10" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -495,7 +506,7 @@ export function SatislarPanel() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.15, delay: i < 20 ? i * 0.02 : 0 }}
-                      className="hover:bg-muted/30 transition-colors"
+                      className="hover:bg-muted/30 transition-colors group"
                     >
                       <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
                         {formatDate(e.date)}
@@ -529,6 +540,25 @@ export function SatislarPanel() {
                             </span>
                           : <span className="text-xs text-muted-foreground/40">—</span>
                         }
+                      </td>
+                      <td className="px-2 py-3">
+                        {confirmId === e.id ? (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => handleDelete(e.id)} disabled={deletingId === e.id}
+                              className="px-2 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold disabled:opacity-60 transition-colors whitespace-nowrap">
+                              {deletingId === e.id ? '...' : 'Evet'}
+                            </button>
+                            <button onClick={() => setConfirmId(null)}
+                              className="px-2 py-1 rounded-lg border border-border text-xs hover:bg-muted transition-colors">
+                              Hayır
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConfirmId(e.id)}
+                            className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </td>
                     </motion.tr>
                   ))}
