@@ -56,30 +56,22 @@ function StatCard({ title, value, subtitle, icon: Icon, color, delay = 0, trend 
   title: string; value: string; subtitle?: string; icon: typeof TrendingUp
   color: 'blue' | 'emerald' | 'violet' | 'red' | 'amber'; delay?: number; trend?: string
 }) {
-  const colors = {
-    blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'bg-blue-500/20 text-blue-400',    text: 'text-blue-400',    glow: 'shadow-blue-500/10' },
-    emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'bg-emerald-500/20 text-emerald-400', text: 'text-emerald-400', glow: 'shadow-emerald-500/10' },
-    violet:  { bg: 'bg-violet-500/10',  border: 'border-violet-500/20',  icon: 'bg-violet-500/20 text-violet-400',  text: 'text-violet-400',  glow: 'shadow-violet-500/10' },
-    red:     { bg: 'bg-red-500/10',     border: 'border-red-500/20',     icon: 'bg-red-500/20 text-red-400',     text: 'text-red-400',     glow: 'shadow-red-500/10' },
-    amber:   { bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   icon: 'bg-amber-500/20 text-amber-400',   text: 'text-amber-400',   glow: 'shadow-amber-500/10' },
-  }
-  const c = colors[color]
   return (
     <motion.div {...fadeUp(delay)}
       whileHover={{ y: -3, transition: { duration: 0.2 } }}
-      className={`relative p-5 rounded-2xl border ${c.border} ${c.bg} shadow-lg ${c.glow} overflow-hidden cursor-default`}>
-      <div className="absolute inset-0 shimmer pointer-events-none opacity-50" />
+      className={`relative p-5 rounded-2xl border color-card-${color} overflow-hidden cursor-default`}>
+      <div className="absolute inset-0 shimmer pointer-events-none opacity-30 dark:opacity-50" />
       <div className="flex items-start justify-between mb-4">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <div className={`p-2 rounded-xl ${c.icon}`}>
+        <div className={`p-2 rounded-xl color-icon-${color}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
-      <p className="text-2xl font-bold tracking-tight">{value}</p>
+      <p className={`text-2xl font-bold tracking-tight color-text-${color}`}>{value}</p>
       <div className="flex items-center justify-between mt-1">
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         {trend && (
-          <span className="flex items-center gap-0.5 text-xs text-emerald-400 font-medium">
+          <span className={`flex items-center gap-0.5 text-xs font-medium color-text-emerald`}>
             <ArrowUpRight className="w-3 h-3" /> {trend}
           </span>
         )}
@@ -119,10 +111,10 @@ export function AdminDashboard() {
     </div>
   )
 
-  const alertConfig: Record<string, { icon: typeof Bell; color: string; bg: string; border: string }> = {
-    overdue:    { icon: AlertCircle, color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/20' },
-    unassigned: { icon: UserX,       color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
-    behind:     { icon: Target,      color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+  const alertConfig: Record<string, { icon: typeof Bell; color: string; cardCls: string }> = {
+    overdue:    { icon: AlertCircle, color: 'color-text-red',   cardCls: 'border color-card-red' },
+    unassigned: { icon: UserX,       color: 'color-text-amber', cardCls: 'border color-card-amber' },
+    behind:     { icon: Target,      color: 'color-text-amber', cardCls: 'border color-card-amber' },
   }
 
   return (
@@ -157,7 +149,7 @@ export function AdminDashboard() {
               <h2 className="font-semibold flex items-center gap-2">
                 <Target className="w-4 h-4 text-blue-400" /> Aylık Hedef İlerlemesi
               </h2>
-              <span className={`text-sm font-bold px-3 py-1 rounded-full ${overallPct >= 80 ? 'bg-emerald-500/15 text-emerald-400' : overallPct >= 50 ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>
+              <span className={`text-sm font-bold px-3 py-1 rounded-full ${overallPct >= 80 ? 'color-card-emerald color-text-emerald' : overallPct >= 50 ? 'color-card-blue color-text-blue' : 'color-card-amber color-text-amber'}`}>
                 %{overallPct.toFixed(0)}
               </span>
             </div>
@@ -201,9 +193,9 @@ export function AdminDashboard() {
           {/* Bottom summary */}
           <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
             {[
-              { label: 'Temsilci', value: stats.repsCount, icon: Users, color: 'text-blue-400' },
-              { label: 'Müşteri', value: stats.activeCustomers, icon: UserCheck, color: 'text-violet-400' },
-              { label: 'Atanmamış', value: stats.unassignedCustomers, icon: UserX, color: 'text-amber-400' },
+              { label: 'Temsilci', value: stats.repsCount, icon: Users, color: 'color-text-blue' },
+              { label: 'Müşteri', value: stats.activeCustomers, icon: UserCheck, color: 'color-text-violet' },
+              { label: 'Atanmamış', value: stats.unassignedCustomers, icon: UserX, color: 'color-text-amber' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="text-center p-3 rounded-xl bg-muted/40">
                 <Icon className={`w-4 h-4 mx-auto mb-1 ${color}`} />
@@ -222,7 +214,7 @@ export function AdminDashboard() {
               <Bell className="w-4 h-4 text-amber-400" /> Uyarılar
             </h2>
             {stats.alerts.length === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-emerald-400">
+              <div className="flex items-center gap-2 text-sm color-text-emerald">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Her şey yolunda</span>
               </div>
@@ -234,7 +226,7 @@ export function AdminDashboard() {
                   return (
                     <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.35 + i * 0.08 }}
-                      className={`flex items-start gap-3 p-3 rounded-xl ${conf.bg} border ${conf.border}`}>
+                      className={`flex items-start gap-3 p-3 rounded-xl ${conf.cardCls}`}>
                       <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${conf.color}`} />
                       <div>
                         <p className={`text-sm font-semibold ${conf.color}`}>{a.count} {a.message}</p>
@@ -269,7 +261,7 @@ export function AdminDashboard() {
                         {formatDate(p.paymentDate)}
                       </p>
                     </div>
-                    <span className="text-sm font-bold text-emerald-400 ml-2 flex-shrink-0">
+                    <span className="text-sm font-bold color-text-emerald ml-2 flex-shrink-0">
                       +{formatCurrency(p.amount)}
                     </span>
                   </motion.div>

@@ -18,10 +18,10 @@ const buckets = [
 ]
 
 const statusMap: Record<string, { label: string; cls: string }> = {
-  PENDING: { label: 'Bekliyor', cls: 'text-amber-400 bg-amber-400/10' },
-  PARTIAL: { label: 'Kısmi', cls: 'text-blue-400 bg-blue-400/10' },
-  OVERDUE: { label: 'Gecikmiş', cls: 'text-red-400 bg-red-400/10' },
-  PAID: { label: 'Ödendi', cls: 'text-emerald-400 bg-emerald-400/10' },
+  PENDING: { label: 'Bekliyor', cls: 'status-pending border' },
+  PARTIAL: { label: 'Kısmi',    cls: 'status-partial border' },
+  OVERDUE: { label: 'Gecikmiş', cls: 'status-overdue border' },
+  PAID:    { label: 'Ödendi',   cls: 'status-paid border' },
 }
 
 export function BorclarPanel() {

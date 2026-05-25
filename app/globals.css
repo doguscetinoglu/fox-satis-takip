@@ -12,25 +12,62 @@
   --color-primary: var(--primary);
 }
 
-/* ─── LIGHT MODE (glassmorphism) ─────────────────────────── */
+/* ─── LIGHT MODE ─────────────────────────────────────────── */
 :root {
-  --background: #eef4ff;
+  --background: #f0f4ff;
   --foreground: #0f172a;
-  --card: rgba(255, 255, 255, 0.72);
+  --card: rgba(255, 255, 255, 0.82);
   --card-foreground: #0f172a;
-  --border: rgba(148, 163, 184, 0.22);
-  --muted: rgba(248, 250, 255, 0.80);
+  --border: rgba(148, 163, 184, 0.40);
+  --muted: rgba(241, 245, 249, 0.90);
   --muted-foreground: #475569;
-  --accent: #0071E3;
+  --accent: #2563eb;
   --primary: #1d4ed8;
 
-  --sidebar-bg: rgba(255, 255, 255, 0.88);
-  --header-bg: rgba(255, 255, 255, 0.82);
+  --sidebar-bg: rgba(255, 255, 255, 0.94);
+  --header-bg: rgba(255, 255, 255, 0.90);
   --nav-text: #475569;
   --nav-text-active: #1d4ed8;
   --nav-bg-active: rgba(37, 99, 235, 0.10);
-  --nav-bg-hover: rgba(0, 0, 0, 0.05);
-  --nav-border: rgba(226, 232, 240, 0.6);
+  --nav-bg-hover: rgba(15, 23, 42, 0.05);
+  --nav-border: rgba(203, 213, 225, 0.9);
+
+  /* Colored card tokens — light */
+  --card-blue-bg:    rgba(239, 246, 255, 0.95);
+  --card-blue-border: rgba(147, 197, 253, 0.6);
+  --card-blue-icon:  rgba(219, 234, 254, 1);
+  --card-blue-text:  #1d4ed8;
+  --card-blue-icon-color: #2563eb;
+
+  --card-emerald-bg:    rgba(240, 253, 244, 0.95);
+  --card-emerald-border: rgba(110, 231, 183, 0.55);
+  --card-emerald-icon:  rgba(209, 250, 229, 1);
+  --card-emerald-text:  #047857;
+  --card-emerald-icon-color: #059669;
+
+  --card-violet-bg:    rgba(245, 243, 255, 0.95);
+  --card-violet-border: rgba(196, 181, 253, 0.55);
+  --card-violet-icon:  rgba(237, 233, 254, 1);
+  --card-violet-text:  #5b21b6;
+  --card-violet-icon-color: #7c3aed;
+
+  --card-red-bg:    rgba(255, 241, 242, 0.95);
+  --card-red-border: rgba(252, 165, 165, 0.55);
+  --card-red-icon:  rgba(254, 226, 226, 1);
+  --card-red-text:  #b91c1c;
+  --card-red-icon-color: #dc2626;
+
+  --card-amber-bg:    rgba(255, 251, 235, 0.95);
+  --card-amber-border: rgba(252, 211, 77, 0.55);
+  --card-amber-icon:  rgba(254, 243, 199, 1);
+  --card-amber-text:  #92400e;
+  --card-amber-icon-color: #d97706;
+
+  --card-teal-bg:    rgba(240, 253, 250, 0.95);
+  --card-teal-border: rgba(94, 234, 212, 0.55);
+  --card-teal-icon:  rgba(204, 251, 241, 1);
+  --card-teal-text:  #0f766e;
+  --card-teal-icon-color: #0d9488;
 }
 
 /* ─── DARK MODE ──────────────────────────────────────────── */
@@ -52,22 +89,59 @@
   --nav-bg-active: rgba(59, 130, 246, 0.15);
   --nav-bg-hover: rgba(255, 255, 255, 0.05);
   --nav-border: rgba(30, 41, 59, 1);
+
+  /* Dark mode card tokens — keep original dark values */
+  --card-blue-bg:    rgba(59, 130, 246, 0.10);
+  --card-blue-border: rgba(59, 130, 246, 0.20);
+  --card-blue-icon:  rgba(59, 130, 246, 0.20);
+  --card-blue-text:  #60a5fa;
+  --card-blue-icon-color: #60a5fa;
+
+  --card-emerald-bg:    rgba(16, 185, 129, 0.10);
+  --card-emerald-border: rgba(16, 185, 129, 0.20);
+  --card-emerald-icon:  rgba(16, 185, 129, 0.20);
+  --card-emerald-text:  #34d399;
+  --card-emerald-icon-color: #34d399;
+
+  --card-violet-bg:    rgba(139, 92, 246, 0.10);
+  --card-violet-border: rgba(139, 92, 246, 0.20);
+  --card-violet-icon:  rgba(139, 92, 246, 0.20);
+  --card-violet-text:  #a78bfa;
+  --card-violet-icon-color: #a78bfa;
+
+  --card-red-bg:    rgba(239, 68, 68, 0.10);
+  --card-red-border: rgba(239, 68, 68, 0.20);
+  --card-red-icon:  rgba(239, 68, 68, 0.20);
+  --card-red-text:  #f87171;
+  --card-red-icon-color: #f87171;
+
+  --card-amber-bg:    rgba(245, 158, 11, 0.10);
+  --card-amber-border: rgba(245, 158, 11, 0.20);
+  --card-amber-icon:  rgba(245, 158, 11, 0.20);
+  --card-amber-text:  #fbbf24;
+  --card-amber-icon-color: #fbbf24;
+
+  --card-teal-bg:    rgba(20, 184, 166, 0.10);
+  --card-teal-border: rgba(20, 184, 166, 0.20);
+  --card-teal-icon:  rgba(20, 184, 166, 0.20);
+  --card-teal-text:  #2dd4bf;
+  --card-teal-icon-color: #2dd4bf;
 }
 
 * { border-color: var(--border); }
 
-/* Light: beautiful gradient background */
+/* ─── LIGHT: rich gradient background with radial orbs ─── */
 html:not(.dark) {
-  background: linear-gradient(135deg,
-    #dbeafe 0%, #eff6ff 18%, #f0f9ff 35%,
-    #f8fafc 52%, #f5f3ff 70%, #ede9fe 85%, #ddd6fe 100%);
+  background:
+    radial-gradient(ellipse 70% 50% at 10% 10%, rgba(147, 197, 253, 0.55) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 85%, rgba(196, 181, 253, 0.50) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 60% 5%,  rgba(167, 243, 208, 0.30) 0%, transparent 50%),
+    linear-gradient(155deg, #e8f0fe 0%, #f0f4ff 40%, #f5f0ff 70%, #eef2ff 100%);
   background-attachment: fixed;
   min-height: 100vh;
 }
 
-html.dark {
-  background: #020617;
-}
+html.dark { background: #020617; }
 
 body {
   background: transparent;
@@ -77,12 +151,22 @@ body {
   min-height: 100vh;
 }
 
-/* ─── GLASS UTILITY ─────────────────────────────────────── */
+/* ─── GLASS CARD ─────────────────────────────────────────── */
 .glass {
   background: var(--card);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
+}
+
+/* Light mode: add shadow + highlight border for depth */
+:root:not(.dark) .glass,
+:root:not(.dark) [class*="bg-card"],
+:root:not(.dark) .rounded-2xl[class*="border-border"] {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 4px 16px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80);
 }
 
 /* ─── SIDEBAR / HEADER ──────────────────────────────────── */
@@ -93,11 +177,19 @@ body {
   border-color: var(--nav-border);
 }
 
+:root:not(.dark) .sidebar-glass {
+  box-shadow: 2px 0 16px rgba(15, 23, 42, 0.06);
+}
+
 .header-glass {
   background: var(--header-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-color: var(--nav-border);
+}
+
+:root:not(.dark) .header-glass {
+  box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
 }
 
 /* ─── NAV ITEMS ─────────────────────────────────────────── */
@@ -114,6 +206,130 @@ body {
   background: var(--nav-bg-active);
   font-weight: 500;
 }
+
+/* ─── SEMANTIC COLOR CARD CLASSES ───────────────────────── */
+.color-card-blue    { background: var(--card-blue-bg);    border-color: var(--card-blue-border); }
+.color-card-emerald { background: var(--card-emerald-bg); border-color: var(--card-emerald-border); }
+.color-card-violet  { background: var(--card-violet-bg);  border-color: var(--card-violet-border); }
+.color-card-red     { background: var(--card-red-bg);     border-color: var(--card-red-border); }
+.color-card-amber   { background: var(--card-amber-bg);   border-color: var(--card-amber-border); }
+.color-card-teal    { background: var(--card-teal-bg);    border-color: var(--card-teal-border); }
+
+.color-icon-blue    { background: var(--card-blue-icon);    color: var(--card-blue-icon-color); }
+.color-icon-emerald { background: var(--card-emerald-icon); color: var(--card-emerald-icon-color); }
+.color-icon-violet  { background: var(--card-violet-icon);  color: var(--card-violet-icon-color); }
+.color-icon-red     { background: var(--card-red-icon);     color: var(--card-red-icon-color); }
+.color-icon-amber   { background: var(--card-amber-icon);   color: var(--card-amber-icon-color); }
+.color-icon-teal    { background: var(--card-teal-icon);    color: var(--card-teal-icon-color); }
+
+.color-text-blue    { color: var(--card-blue-text); }
+.color-text-emerald { color: var(--card-emerald-text); }
+.color-text-violet  { color: var(--card-violet-text); }
+.color-text-red     { color: var(--card-red-text); }
+.color-text-amber   { color: var(--card-amber-text); }
+.color-text-teal    { color: var(--card-teal-text); }
+
+/* Light mode: add shadow to colored cards */
+:root:not(.dark) .color-card-blue,
+:root:not(.dark) .color-card-emerald,
+:root:not(.dark) .color-card-violet,
+:root:not(.dark) .color-card-red,
+:root:not(.dark) .color-card-amber,
+:root:not(.dark) .color-card-teal {
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.07),
+    0 6px 20px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* ─── STATUS BADGE TOKENS ───────────────────────────────── */
+:root:not(.dark) .status-pending { color: #92400e; background: #fef3c7; border-color: rgba(217,119,6,0.3); }
+:root:not(.dark) .status-overdue  { color: #991b1b; background: #fee2e2; border-color: rgba(220,38,38,0.3); }
+:root:not(.dark) .status-partial  { color: #1e40af; background: #dbeafe; border-color: rgba(37,99,235,0.3); }
+:root:not(.dark) .status-paid     { color: #065f46; background: #d1fae5; border-color: rgba(5,150,105,0.3); }
+:root:not(.dark) .status-active   { color: #065f46; background: #d1fae5; border-color: rgba(5,150,105,0.3); }
+:root:not(.dark) .status-trial    { color: #1e40af; background: #dbeafe; border-color: rgba(37,99,235,0.3); }
+:root:not(.dark) .status-suspended{ color: #991b1b; background: #fee2e2; border-color: rgba(220,38,38,0.3); }
+
+.dark .status-pending  { color: #fbbf24; background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.25); }
+.dark .status-overdue  { color: #f87171; background: rgba(239,68,68,0.10);  border-color: rgba(239,68,68,0.25); }
+.dark .status-partial  { color: #60a5fa; background: rgba(59,130,246,0.10); border-color: rgba(59,130,246,0.25); }
+.dark .status-paid     { color: #34d399; background: rgba(16,185,129,0.10); border-color: rgba(16,185,129,0.25); }
+.dark .status-active   { color: #34d399; background: rgba(16,185,129,0.10); border-color: rgba(16,185,129,0.25); }
+.dark .status-trial    { color: #60a5fa; background: rgba(59,130,246,0.10); border-color: rgba(59,130,246,0.25); }
+.dark .status-suspended{ color: #f87171; background: rgba(239,68,68,0.10);  border-color: rgba(239,68,68,0.25); }
+
+/* ─── INPUT / FORM ──────────────────────────────────────── */
+:root:not(.dark) input,
+:root:not(.dark) textarea,
+:root:not(.dark) select {
+  background-color: rgba(255, 255, 255, 0.90);
+  border-color: rgba(148, 163, 184, 0.50);
+  color: #0f172a;
+}
+
+:root:not(.dark) input:focus,
+:root:not(.dark) textarea:focus,
+:root:not(.dark) select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* ─── TABLE ─────────────────────────────────────────────── */
+:root:not(.dark) table th {
+  background: rgba(241, 245, 249, 0.90);
+  color: #334155;
+}
+
+:root:not(.dark) table tr:hover td {
+  background: rgba(241, 245, 249, 0.60);
+}
+
+/* ─── LIGHT MODE: GLOBAL CONTRAST OVERRIDES ────────────── */
+/* Boost -400 color text shades → readable on light bg      */
+:root:not(.dark) .text-blue-400    { color: #1d4ed8; }
+:root:not(.dark) .text-emerald-400 { color: #047857; }
+:root:not(.dark) .text-red-400     { color: #b91c1c; }
+:root:not(.dark) .text-amber-400   { color: #92400e; }
+:root:not(.dark) .text-violet-400  { color: #5b21b6; }
+:root:not(.dark) .text-orange-400  { color: #c2410c; }
+:root:not(.dark) .text-teal-400    { color: #0f766e; }
+:root:not(.dark) .text-cyan-400    { color: #0e7490; }
+:root:not(.dark) .text-pink-400    { color: #9d174d; }
+
+/* Colored bg chips → use solid pastel instead of near-transparent */
+:root:not(.dark) .bg-blue-500\/10,
+:root:not(.dark) .bg-blue-400\/10   { background-color: #dbeafe; }
+:root:not(.dark) .bg-blue-500\/15   { background-color: #bfdbfe; }
+:root:not(.dark) .bg-emerald-500\/10,
+:root:not(.dark) .bg-emerald-400\/10 { background-color: #d1fae5; }
+:root:not(.dark) .bg-emerald-500\/15 { background-color: #a7f3d0; }
+:root:not(.dark) .bg-red-500\/10,
+:root:not(.dark) .bg-red-400\/10    { background-color: #fee2e2; }
+:root:not(.dark) .bg-amber-500\/10,
+:root:not(.dark) .bg-amber-400\/10  { background-color: #fef3c7; }
+:root:not(.dark) .bg-amber-500\/15  { background-color: #fde68a; }
+:root:not(.dark) .bg-violet-500\/10,
+:root:not(.dark) .bg-violet-400\/10 { background-color: #ede9fe; }
+:root:not(.dark) .bg-orange-500\/10,
+:root:not(.dark) .bg-orange-400\/10 { background-color: #ffedd5; }
+:root:not(.dark) .bg-teal-500\/10   { background-color: #ccfbf1; }
+:root:not(.dark) .bg-slate-500\/10  { background-color: #f1f5f9; }
+
+/* Colored borders → more visible */
+:root:not(.dark) .border-blue-500\/20   { border-color: rgba(147, 197, 253, 0.8); }
+:root:not(.dark) .border-emerald-500\/20 { border-color: rgba(110, 231, 183, 0.8); }
+:root:not(.dark) .border-red-500\/20    { border-color: rgba(252, 165, 165, 0.8); }
+:root:not(.dark) .border-amber-500\/20  { border-color: rgba(252, 211, 77, 0.8); }
+:root:not(.dark) .border-violet-500\/20 { border-color: rgba(196, 181, 253, 0.8); }
+:root:not(.dark) .border-orange-500\/20 { border-color: rgba(253, 186, 116, 0.8); }
+
+/* Icon backgrounds */
+:root:not(.dark) .bg-blue-500\/20    { background-color: #bfdbfe; }
+:root:not(.dark) .bg-emerald-500\/20 { background-color: #a7f3d0; }
+:root:not(.dark) .bg-red-500\/20     { background-color: #fecaca; }
+:root:not(.dark) .bg-amber-500\/20   { background-color: #fde68a; }
+:root:not(.dark) .bg-violet-500\/20  { background-color: #ddd6fe; }
 
 /* ─── GRADIENT TEXT ─────────────────────────────────────── */
 .gradient-text {
