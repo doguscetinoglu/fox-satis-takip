@@ -98,7 +98,7 @@ export function SatislarPanel() {
   const [form, setForm] = useState({
     userId: '', customerId: '', amount: '', salesCount: '1',
     date: new Date().toISOString().split('T')[0], description: '',
-    createDebt: false, documentNo: '', dueDate: defaultDueDate(),
+    documentNo: '', dueDate: defaultDueDate(),
   })
   const [saving,  setSaving]  = useState(false)
   const [formErr, setFormErr] = useState('')
@@ -202,7 +202,7 @@ export function SatislarPanel() {
         body: JSON.stringify({ ...form, amount: Number(form.amount), salesCount: Number(form.salesCount) }),
       })
       if (res.ok) {
-        setForm(f => ({ ...f, userId: '', customerId: '', amount: '', salesCount: '1', description: '', createDebt: false, documentNo: '', dueDate: defaultDueDate() }))
+        setForm(f => ({ ...f, userId: '', customerId: '', amount: '', salesCount: '1', description: '', documentNo: '', dueDate: defaultDueDate() }))
         setSaved(true)
         load()
         setTimeout(() => { setSaved(false); setShowForm(false) }, 1200)
@@ -315,7 +315,7 @@ export function SatislarPanel() {
                     {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                   <select value={form.customerId}
-                    onChange={e => setForm(f => ({ ...f, customerId: e.target.value, createDebt: false }))}
+                    onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))}
                     className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Müşteri Seç (opsiyonel)</option>
                     {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
@@ -334,45 +334,34 @@ export function SatislarPanel() {
                     className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
-                {/* Borç Kaydı Toggle */}
-                {form.customerId && (
-                  <div className={`rounded-xl border transition-all ${form.createDebt ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-muted/30'}`}>
-                    <button type="button"
-                      onClick={() => setForm(f => ({ ...f, createDebt: !f.createDebt }))}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left">
-                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${form.createDebt ? 'border-amber-500 bg-amber-500' : 'border-border'}`}>
-                        {form.createDebt && <CheckCircle2 className="w-3 h-3 text-white" />}
-                      </div>
-                      <span className={form.createDebt ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}>
-                        Borç kaydı da oluştur
-                      </span>
-                      <span className="text-xs text-muted-foreground font-normal ml-auto">Müşteriye alacak açılır</span>
-                    </button>
-
-                    <AnimatePresence>
-                      {form.createDebt && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-                          className="overflow-hidden">
-                          <div className="grid sm:grid-cols-2 gap-3 px-4 pb-4">
-                            <div>
-                              <label className="block text-xs text-muted-foreground mb-1.5">Vade Tarihi *</label>
-                              <input type="date" required={form.createDebt} value={form.dueDate}
-                                onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                                className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-amber-500" />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-muted-foreground mb-1.5">Evrak / Fatura No</label>
-                              <input placeholder="FTR-2026-001" value={form.documentNo}
-                                onChange={e => setForm(f => ({ ...f, documentNo: e.target.value }))}
-                                className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-amber-500" />
-                            </div>
+                {/* Borç alanları — müşteri seçilince otomatik görünür */}
+                <AnimatePresence>
+                  {form.customerId && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+                      className="overflow-hidden">
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+                        <p className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Müşteri borç hanesine otomatik kaydedilecek
+                        </p>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-muted-foreground mb-1.5">Vade Tarihi *</label>
+                            <input type="date" required value={form.dueDate}
+                              onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
+                              className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-amber-500" />
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
+                          <div>
+                            <label className="block text-xs text-muted-foreground mb-1.5">Evrak / Fatura No</label>
+                            <input placeholder="FTR-2026-001" value={form.documentNo}
+                              onChange={e => setForm(f => ({ ...f, documentNo: e.target.value }))}
+                              className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-amber-500" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {formErr && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
@@ -381,7 +370,7 @@ export function SatislarPanel() {
                 )}
                 {saved && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
-                    <CheckCircle2 className="w-4 h-4" /> {form.createDebt ? 'Satış ve borç kaydı oluşturuldu!' : 'Satış başarıyla kaydedildi!'}
+                    <CheckCircle2 className="w-4 h-4" /> Satış başarıyla kaydedildi!
                   </div>
                 )}
                 <div className="flex gap-3 justify-end pt-1">

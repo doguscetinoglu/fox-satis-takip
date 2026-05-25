@@ -50,8 +50,7 @@ export async function POST(req: Request) {
   if (!session || session.role !== 'TENANT_ADMIN') return unauthorized()
 
   const body = await req.json()
-  const { userId, customerId, amount, salesCount, date, description,
-          createDebt, documentNo, dueDate } = body
+  const { userId, customerId, amount, salesCount, date, description, documentNo, dueDate } = body
 
   if (!userId) return NextResponse.json({ hata: 'Temsilci seçilmedi' }, { status: 400 })
 
@@ -63,40 +62,43 @@ export async function POST(req: Request) {
     if (!cust) return NextResponse.json({ hata: 'Müşteri bulunamadı' }, { status: 404 })
   }
 
-  if (createDebt && !customerId) {
-    return NextResponse.json({ hata: 'Borç kaydı için müşteri seçilmeli' }, { status: 400 })
-  }
-  if (createDebt && !dueDate) {
-    return NextResponse.json({ hata: 'Borç kaydı için vade tarihi gerekli' }, { status: 400 })
+  // Müşteri seçilmişse vade tarihi zorunlu
+  if (customerId && !dueDate) {
+    return NextResponse.json({ hata: 'Müşteri seçilince vade tarihi gereklidir' }, { status: 400 })
   }
 
-  const [entry] = await prisma.$transaction([
-    prisma.salesEntry.create({
+  const saleDate = new Date(date)
+  const resolvedDueDate = dueDate ? new Date(dueDate) : new Date(saleDate.getTime() + 30 * 86400000)
+
+  const salesOp = prisma.salesEntry.create({
+    data: {
+      tenantId: session.tenantId,
+      userId,
+      customerId: customerId || undefined,
+      amount: Number(amount),
+      salesCount: Number(salesCount) || 1,
+      date: saleDate,
+      description,
+    },
+  })
+
+  if (customerId) {
+    const debtOp = prisma.debt.create({
       data: {
         tenantId: session.tenantId,
-        userId,
-        customerId: customerId || undefined,
+        customerId,
         amount: Number(amount),
-        salesCount: Number(salesCount) || 1,
-        date: new Date(date),
+        documentDate: saleDate,
+        dueDate: resolvedDueDate,
+        documentNo: documentNo || undefined,
         description,
+        status: 'PENDING',
       },
-    }),
-    ...(createDebt && customerId ? [
-      prisma.debt.create({
-        data: {
-          tenantId: session.tenantId,
-          customerId,
-          amount: Number(amount),
-          documentDate: new Date(date),
-          dueDate: new Date(dueDate),
-          documentNo: documentNo || undefined,
-          description,
-          status: 'PENDING',
-        },
-      }),
-    ] : []),
-  ])
+    })
+    const [entry] = await prisma.$transaction([salesOp, debtOp])
+    return NextResponse.json(entry)
+  }
 
+  const entry = await salesOp
   return NextResponse.json(entry)
 }

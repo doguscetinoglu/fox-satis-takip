@@ -34,6 +34,45 @@ const createSchema = z.object({
   description: z.string().optional(),
 })
 
+/**
+ * Müşterinin toplam ödemelerini en eski borca doğru uygular.
+ * Her ödeme POST sonrası çağrılır; borç durumlarını (PENDING/PARTIAL/PAID/OVERDUE) günceller.
+ */
+async function recalcDebts(tenantId: string, customerId: string) {
+  const paySum = await prisma.payment.aggregate({
+    where: { tenantId, customerId },
+    _sum: { amount: true },
+  })
+  let pool = paySum._sum.amount ?? 0
+
+  const debts = await prisma.debt.findMany({
+    where: { tenantId, customerId },
+    orderBy: { dueDate: 'asc' },
+    select: { id: true, amount: true, dueDate: true, status: true },
+  })
+
+  const ops = debts.map(debt => {
+    let newStatus: 'PENDING' | 'PARTIAL' | 'PAID' | 'OVERDUE'
+    if (pool <= 0) {
+      newStatus = new Date(debt.dueDate) < new Date() ? 'OVERDUE' : 'PENDING'
+    } else if (pool >= debt.amount) {
+      pool -= debt.amount
+      newStatus = 'PAID'
+    } else {
+      pool = 0
+      newStatus = 'PARTIAL'
+    }
+    return { id: debt.id, newStatus, changed: debt.status !== newStatus }
+  })
+
+  const changed = ops.filter(o => o.changed)
+  if (changed.length) {
+    await prisma.$transaction(
+      changed.map(o => prisma.debt.update({ where: { id: o.id }, data: { status: o.newStatus } }))
+    )
+  }
+}
+
 export async function POST(req: Request) {
   const session = await getSession()
   if (!session || session.role !== 'TENANT_ADMIN') return unauthorized()
@@ -70,6 +109,9 @@ export async function POST(req: Request) {
       recordedById,
     },
   })
+
+  // Ödeme girilince müşterinin borçlarını eskiden yeniye kapatır
+  await recalcDebts(session.tenantId, parsed.data.customerId)
 
   return NextResponse.json(payment)
 }

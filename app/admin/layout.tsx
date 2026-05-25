@@ -10,7 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await requireTenantAdmin()
   const tenant = await prisma.tenant.findUnique({ where: { id: session.tenantId } })
 
-  const trialDays = tenant && session.planStatus === 'TRIAL'
+  const trialDays = tenant && tenant.planStatus === 'TRIAL'
     ? getTrialDaysRemaining(tenant.trialEndsAt)
     : null
 
