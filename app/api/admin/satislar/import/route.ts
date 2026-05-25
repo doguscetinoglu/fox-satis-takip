@@ -34,16 +34,18 @@ export async function POST(req: Request) {
   const buffer = Buffer.from(await file.arrayBuffer())
   const { rows, errors } = parseSalesSheet(buffer)
 
-  if (errors.length > 0) return NextResponse.json({ errors }, { status: 422 })
-
   let inserted = 0
+  const rowErrors = [...errors]
 
   for (const row of rows) {
     const repPhone = normalizePhone(row.repPhone)
     const rep = await prisma.user.findUnique({
       where: { tenantId_phone: { tenantId: session.tenantId, phone: repPhone } },
     })
-    if (!rep) continue
+    if (!rep) {
+      rowErrors.push({ row: 0, field: 'Temsilci Telefonu', message: `Temsilci bulunamadı: ${row.repPhone}` })
+      continue
+    }
 
     let customerId: string | undefined
     if (row.customerCode) {
@@ -64,8 +66,26 @@ export async function POST(req: Request) {
         description: row.description,
       },
     })
+
+    // Müşteri eşleştiyse borç da oluştur (30 gün vade)
+    if (customerId) {
+      const dueDate = new Date(row.date)
+      dueDate.setDate(dueDate.getDate() + 30)
+      await prisma.debt.create({
+        data: {
+          tenantId: session.tenantId,
+          customerId,
+          amount: row.amount,
+          documentDate: row.date,
+          dueDate,
+          description: row.description,
+          status: 'PENDING',
+        },
+      })
+    }
+
     inserted++
   }
 
-  return NextResponse.json({ inserted, errors: [] })
+  return NextResponse.json({ inserted, errors: rowErrors })
 }

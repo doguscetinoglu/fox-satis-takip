@@ -84,12 +84,15 @@ export function parseCustomerSheet(buffer: Buffer): {
 // ─── SALES TEMPLATE + PARSER ───────────────────────────────
 
 export function generateSalesTemplate(): Buffer {
+  const wb = XLSX.utils.book_new()
   const ws = XLSX.utils.aoa_to_sheet([
     ['Temsilci Telefonu*', 'Müşteri Kodu', 'Tutar*', 'Adet', 'Tarih* (GG.AA.YYYY)', 'Açıklama'],
-    ['05551111111', 'MUS001', '5000', '10', '01.05.2025', 'Mayıs satışı'],
+    ['05551111111', 'MUS001', 5000, 10, '25.05.2026', 'Mayıs satışı'],
   ])
-  ws['!cols'] = [18, 14, 12, 8, 22, 30].map(wch => ({ wch }))
-  const wb = XLSX.utils.book_new()
+  // Telefon ve Tarih sütunlarını metin olarak işaretle — Excel'in 0 silmesi / otomatik dönüşümü engellemek için
+  const textCells = ['A1', 'A2', 'E1', 'E2']
+  textCells.forEach(addr => { if (ws[addr]) ws[addr].z = '@' })
+  ws['!cols'] = [20, 14, 12, 8, 22, 30].map(wch => ({ wch }))
   XLSX.utils.book_append_sheet(wb, ws, 'Satışlar')
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))
 }
@@ -103,14 +106,27 @@ export type ParsedSalesRow = {
   description?: string
 }
 
-function parseTurkishDate(raw: string): Date | null {
+function parseTurkishDate(raw: unknown): Date | null {
+  // Excel cellDates:true → Date object
+  if (raw instanceof Date && !isNaN(raw.getTime())) return raw
+
   const s = String(raw ?? '').trim()
+
   // GG.AA.YYYY
-  const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/)
-  if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
-  // Also accept Excel serial numbers
+  const m1 = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/)
+  if (m1) return new Date(Number(m1[3]), Number(m1[2]) - 1, Number(m1[1]))
+
+  // YYYY-MM-DD
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (m2) return new Date(Number(m2[1]), Number(m2[2]) - 1, Number(m2[3]))
+
+  // Excel serial number (days since 1899-12-30)
   const n = Number(s)
-  if (!isNaN(n) && n > 40000) return XLSX.SSF.parse_date_code(n) ? new Date(XLSX.SSF.format('yyyy-mm-dd', n)) : null
+  if (!isNaN(n) && n > 40000 && n < 110000) {
+    const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000)
+    return isNaN(d.getTime()) ? null : d
+  }
+
   return null
 }
 
@@ -128,21 +144,24 @@ export function parseSalesSheet(buffer: Buffer): {
 
   dataRows.forEach((row: any[], i) => {
     const rowNum = i + 2
-    const repPhone = String(row[0] ?? '').trim()
-    const amount = Number(String(row[2] ?? '').replace(',', '.'))
+
+    // Boş satır kontrolü
+    if (!row[0] && !row[2]) return
+
+    // Telefon: Excel baştaki 0'ı sayıya dönüştürüp silebilir, düzelt
+    let repPhone = String(row[0] ?? '').replace(/[\s\-\(\)]/g, '').trim()
+    if (/^\d{10}$/.test(repPhone) && !repPhone.startsWith('0')) {
+      repPhone = '0' + repPhone  // 10 hane ise başına 0 ekle (Excel'in sildiği 0)
+    }
+
+    const amount = Number(String(row[2] ?? '').replace(',', '.').replace(/[^\d.]/g, ''))
     const rawDate = row[4]
 
     if (!repPhone) { errors.push({ row: rowNum, field: 'Temsilci Telefonu', message: 'Zorunlu alan boş' }); return }
     if (isNaN(amount) || amount <= 0) { errors.push({ row: rowNum, field: 'Tutar', message: 'Geçersiz tutar' }); return }
 
-    let date: Date
-    if (rawDate instanceof Date) {
-      date = rawDate
-    } else {
-      const parsed = parseTurkishDate(String(rawDate))
-      if (!parsed) { errors.push({ row: rowNum, field: 'Tarih', message: 'GG.AA.YYYY formatında girin' }); return }
-      date = parsed
-    }
+    const date = parseTurkishDate(rawDate)
+    if (!date) { errors.push({ row: rowNum, field: 'Tarih', message: 'GG.AA.YYYY formatında girin (örn: 25.05.2026)' }); return }
 
     rows.push({
       repPhone,
