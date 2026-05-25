@@ -197,11 +197,12 @@ const colorMap: Record<string, string> = {
 
 /* ─── FAQ ─── */
 const faqs = [
-  { q: 'Ödeme nasıl yapılıyor?', a: 'IBAN ile banka transferi. Ödemenizi sistem üzerinden bildirirsiniz, onaylarız.' },
-  { q: 'Kaç temsilci ekleyebilirim?', a: '100 TL aylık ücretle sınırsız temsilci ekleyebilirsiniz.' },
-  { q: 'Mevcut müşteri verilerimi nasıl aktarırım?', a: 'Excel şablonunu indirin, verilerinizi girin ve tek seferde yükleyin.' },
-  { q: 'Verilerim güvende mi?', a: 'Şifreli PostgreSQL veritabanı. Her firma kendi verisini görür, başka hiçbir firmaya erişim yok.' },
-  { q: 'İptal edebilir miyim?', a: 'İstediğiniz zaman. Sonraki dönemde ödeme alınmaz.' },
+  { q: 'Planlar arasındaki fark nedir?', a: 'Başlangıç planı 5 temsilciye kadar destekler (100 ₺/ay). Profesyonel planda temsilci sınırı yok, gelişmiş raporlar ve öncelikli destek dahildir (300 ₺/ay). Ömür Boyu pakette sistemi kendi sunucunuza kuruyoruz, tek ödeme yapıyorsunuz ve aylık ücret ödemiyorsunuz.' },
+  { q: 'Ömür Boyu paket nasıl çalışır?', a: 'Sistemi sizin kendi sunucunuza (VPS/dedicated server) kuruyoruz, kaynak kodunu teslim ediyoruz. Kurulum yaklaşık 3 iş günü sürer. Sonrasında aylık hiçbir ücret yoktur.' },
+  { q: 'Ödeme nasıl yapılıyor?', a: 'Aylık planlar için IBAN ile banka transferi yapıp sistem üzerinden bildiriyorsunuz, 1 iş günü içinde onaylıyoruz. Ömür Boyu paket için iletişime geçin.' },
+  { q: 'Mevcut müşteri verilerimi nasıl aktarırım?', a: 'Excel şablonunu indirin, verilerinizi girin ve tek seferde yükleyin. Müşteri, satış ve borç verileri toplu aktarılabilir.' },
+  { q: 'Verilerim güvende mi?', a: 'Şifreli PostgreSQL veritabanı. Her firma kendi verisini görür, başka hiçbir firmaya erişim yoktur.' },
+  { q: 'İptal edebilir miyim?', a: 'İstediğiniz zaman iptal edebilirsiniz. Sonraki dönemde ödeme alınmaz. Verilerinizi Excel olarak dışa aktarabilirsiniz.' },
 ]
 
 export default function LandingPage() {
@@ -402,58 +403,109 @@ export default function LandingPage() {
 
       {/* ── Pricing ── */}
       <section className="py-24 px-6" id="fiyatlandirma">
-        <div className="max-w-md mx-auto">
-          <FadeUp className="text-center mb-12">
+        <div className="max-w-5xl mx-auto">
+          <FadeUp className="text-center mb-14">
             <p className="text-blue-400 text-sm font-medium mb-3 uppercase tracking-widest">Fiyatlandırma</p>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Sade fiyatlandırma</h2>
-            <p className="text-slate-400">Tek plan, tüm özellikler, sınırsız kullanım</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">İhtiyacınıza uygun plan seçin</h2>
+            <p className="text-slate-400">7 gün ücretsiz deneyin, sonra devam edin</p>
           </FadeUp>
 
-          <FadeUp delay={0.1}>
-            <motion.div whileHover={{ scale: 1.01 }}
-              className="relative p-8 rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/10 to-blue-500/5">
-              {/* Badge */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 rounded-full bg-blue-600 text-xs font-bold tracking-wide shadow-lg shadow-blue-500/30">
-                7 GÜN ÜCRETSİZ
-              </div>
+          <div className="grid md:grid-cols-3 gap-6 items-start">
 
-              <div className="text-center mb-8 pt-4">
-                <div className="flex items-baseline justify-center gap-1.5">
-                  <span className="text-6xl font-extrabold tracking-tight">100</span>
-                  <div>
-                    <span className="text-2xl text-slate-400 font-semibold">₺</span>
-                    <p className="text-xs text-slate-500">/ay</p>
-                  </div>
+            {/* Starter */}
+            <FadeUp delay={0.05}>
+              <motion.div whileHover={{ scale: 1.01 }}
+                className="relative p-7 rounded-2xl border border-white/10 bg-white/[0.03]">
+                <p className="text-sm font-semibold text-slate-300 mb-1">Başlangıç</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-5xl font-extrabold tracking-tight">100</span>
+                  <span className="text-xl text-slate-400 font-semibold">₺</span>
+                  <span className="text-slate-500 text-sm">/ay</span>
                 </div>
-                <p className="text-slate-400 mt-2 text-sm">Sınırsız temsilci · Tüm özellikler</p>
-              </div>
+                <p className="text-xs text-slate-500 mb-6">Bulut tabanlı · IBAN ile ödeme</p>
+                <ul className="space-y-2.5 mb-7 text-sm">
+                  {[
+                    '5 satış temsilcisine kadar',
+                    'Sınırsız müşteri kaydı',
+                    'Ciro & borç takibi',
+                    'Aylık hedef belirleme',
+                    'Excel içe/dışa aktarma',
+                    'E-posta destek',
+                  ].map(f => <li key={f} className="flex items-center gap-2.5"><CheckCircle2 className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />{f}</li>)}
+                </ul>
+                <Link href="/kayit" className="block w-full py-3 text-center rounded-xl border border-white/15 hover:bg-white/5 text-sm font-semibold transition-all">
+                  7 Gün Ücretsiz Başla
+                </Link>
+              </motion.div>
+            </FadeUp>
 
-              <ul className="space-y-3 mb-8">
-                {[
-                  'Sınırsız satış temsilcisi',
-                  'Sınırsız müşteri kaydı',
-                  'Günlük ciro takibi',
-                  'Borç yaşlandırma analizi',
-                  'Aylık hedef belirleme',
-                  'Excel dışa aktarma',
-                  'Excel ile toplu veri yükleme',
-                  '7/24 destek',
-                ].map(f => (
-                  <li key={f} className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
+            {/* Pro — öne çıkan */}
+            <FadeUp delay={0.1}>
+              <motion.div whileHover={{ scale: 1.01 }}
+                className="relative p-7 rounded-2xl border border-blue-500/40 bg-gradient-to-b from-blue-500/10 to-blue-500/5">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 rounded-full bg-blue-600 text-xs font-bold tracking-wide shadow-lg shadow-blue-500/30 whitespace-nowrap">
+                  EN POPÜLER
+                </div>
+                <p className="text-sm font-semibold text-blue-300 mb-1 pt-2">Profesyonel</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-5xl font-extrabold tracking-tight">300</span>
+                  <span className="text-xl text-slate-400 font-semibold">₺</span>
+                  <span className="text-slate-500 text-sm">/ay</span>
+                </div>
+                <p className="text-xs text-slate-500 mb-6">Bulut tabanlı · IBAN ile ödeme</p>
+                <ul className="space-y-2.5 mb-7 text-sm">
+                  {[
+                    'Sınırsız satış temsilcisi',
+                    'Sınırsız müşteri kaydı',
+                    'Ciro & borç takibi',
+                    'Aylık hedef belirleme',
+                    'Excel içe/dışa aktarma',
+                    'Gelişmiş raporlar & analizler',
+                    'Öncelikli destek',
+                    '7/24 teknik yardım',
+                  ].map(f => <li key={f} className="flex items-center gap-2.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />{f}</li>)}
+                </ul>
+                <Link href="/kayit" className="block w-full py-3 text-center rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold transition-all hover:shadow-lg hover:shadow-blue-500/30">
+                  7 Gün Ücretsiz Başla
+                </Link>
+                <p className="text-center text-xs text-slate-500 mt-3">İptal istediğiniz zaman</p>
+              </motion.div>
+            </FadeUp>
 
-              <Link href="/kayit" className="block w-full py-3.5 text-center rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold transition-all hover:shadow-lg hover:shadow-blue-500/30">
-                7 Gün Ücretsiz Başla
-              </Link>
-              <p className="text-center text-xs text-slate-500 mt-4">
-                IBAN ile ödeme · İptal istediğiniz zaman
-              </p>
-            </motion.div>
-          </FadeUp>
+            {/* Ömür Boyu */}
+            <FadeUp delay={0.15}>
+              <motion.div whileHover={{ scale: 1.01 }}
+                className="relative p-7 rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/8 to-transparent">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 rounded-full bg-amber-600 text-xs font-bold tracking-wide shadow-lg shadow-amber-500/30 whitespace-nowrap">
+                  TEK SEFERLİK
+                </div>
+                <p className="text-sm font-semibold text-amber-300 mb-1 pt-2">Ömür Boyu</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-5xl font-extrabold tracking-tight">20.000</span>
+                  <span className="text-xl text-slate-400 font-semibold">₺</span>
+                </div>
+                <p className="text-xs text-slate-500 mb-1">Tek ödeme · Aylık ücret yok</p>
+                <p className="text-xs text-amber-400/80 font-medium mb-6">Kendi sunucunuza kurulur</p>
+                <ul className="space-y-2.5 mb-7 text-sm">
+                  {[
+                    'Kendi sunucunuza kurulum',
+                    'Sınırsız temsilci & müşteri',
+                    'Tüm Pro özellikleri',
+                    'Kaynak kodu teslimi',
+                    'Kurulum & yapılandırma dahil',
+                    'Ömür boyu güncelleme',
+                    'Öncelikli destek hattı',
+                  ].map(f => <li key={f} className="flex items-center gap-2.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />{f}</li>)}
+                </ul>
+                <a href="mailto:dogus5455@gmail.com?subject=SalesFox%20Ömür%20Boyu%20Lisans"
+                  className="block w-full py-3 text-center rounded-xl border border-amber-500/40 hover:bg-amber-500/10 text-amber-300 text-sm font-semibold transition-all">
+                  Teklif Al → İletişime Geç
+                </a>
+                <p className="text-center text-xs text-slate-500 mt-3">Kurulum süreci ~3 iş günü</p>
+              </motion.div>
+            </FadeUp>
+
+          </div>
         </div>
       </section>
 

@@ -13,35 +13,51 @@ export async function GET() {
   const tenantId = session.tenantId
   const monthKey = getMonthKey()
   const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
 
-  const reps = await prisma.user.findMany({
-    where: { tenantId },
-    orderBy: { createdAt: 'asc' },
-  })
+  // Tek seferde tüm verileri çek — N+1 yok
+  const [reps, monthRevs, todayRevs, targets, custCounts] = await Promise.all([
+    prisma.user.findMany({ where: { tenantId }, orderBy: { createdAt: 'asc' } }),
+    prisma.salesEntry.groupBy({
+      by: ['userId'],
+      where: { tenantId, date: { gte: startOfMonth } },
+      _sum: { amount: true },
+    }),
+    prisma.salesEntry.groupBy({
+      by: ['userId'],
+      where: { tenantId, date: today },
+      _sum: { amount: true },
+    }),
+    prisma.salesTarget.findMany({ where: { tenantId, monthKey } }),
+    prisma.customer.groupBy({
+      by: ['assignedRepId'],
+      where: { tenantId, assignedRepId: { not: null } },
+      _count: { id: true },
+    }),
+  ])
 
-  const data = await Promise.all(reps.map(async rep => {
-    const [todayRevenue, monthRevenue, target, assignedCount] = await Promise.all([
-      prisma.salesEntry.aggregate({ where: { tenantId, userId: rep.id, date: today }, _sum: { amount: true } }),
-      prisma.salesEntry.aggregate({ where: { tenantId, userId: rep.id, date: { gte: startOfMonth } }, _sum: { amount: true } }),
-      prisma.salesTarget.findUnique({ where: { tenantId_userId_monthKey: { tenantId, userId: rep.id, monthKey } } }),
-      prisma.customer.count({ where: { tenantId, assignedRepId: rep.id } }),
-    ])
-    return {
-      id: rep.id,
-      name: rep.name,
-      phone: rep.phone,
-      isActive: rep.isActive,
-      todayRevenue: todayRevenue._sum.amount ?? 0,
-      monthRevenue: monthRevenue._sum.amount ?? 0,
-      target: target?.revenueTarget ?? 0,
-      salesCountTarget: target?.salesCountTarget ?? 0,
-      assignedCustomers: assignedCount,
-    }
+  // Lookup maps
+  const monthMap  = Object.fromEntries(monthRevs.map(r => [r.userId, r._sum.amount ?? 0]))
+  const todayMap  = Object.fromEntries(todayRevs.map(r => [r.userId, r._sum.amount ?? 0]))
+  const targetMap = Object.fromEntries(targets.map(t => [t.userId, t]))
+  const custMap   = Object.fromEntries(custCounts.map(c => [c.assignedRepId!, c._count.id]))
+
+  const data = reps.map(rep => ({
+    id: rep.id,
+    name: rep.name,
+    phone: rep.phone,
+    isActive: rep.isActive,
+    todayRevenue:      todayMap[rep.id]  ?? 0,
+    monthRevenue:      monthMap[rep.id]  ?? 0,
+    target:            targetMap[rep.id]?.revenueTarget    ?? 0,
+    salesCountTarget:  targetMap[rep.id]?.salesCountTarget ?? 0,
+    assignedCustomers: custMap[rep.id]   ?? 0,
   }))
 
-  return NextResponse.json(data)
+  return NextResponse.json(data, {
+    headers: { 'Cache-Control': 'private, max-age=20, stale-while-revalidate=60' },
+  })
 }
 
 const createSchema = z.object({

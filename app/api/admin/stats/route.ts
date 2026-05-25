@@ -11,13 +11,15 @@ export async function GET() {
   const tenantId = session.tenantId
   const monthKey = getMonthKey()
   const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
 
+  // Tüm aggregate sorgular tek seferde paralel
   const [
     monthlyRevenueAgg, activeCustomers, overdueDebtAgg, totalDebtAgg,
     repsCount, todayRevenueAgg, overdueCount, pendingDebtCount,
     unassignedCustomers, recentPayments, salesEntries,
+    reps, monthRevsByRep, todayRevsByRep, targets, custCounts,
   ] = await Promise.all([
     prisma.salesEntry.aggregate({ where: { tenantId, date: { gte: startOfMonth } }, _sum: { amount: true } }),
     prisma.customer.count({ where: { tenantId } }),
@@ -39,49 +41,56 @@ export async function GET() {
       select: { date: true, amount: true },
       orderBy: { date: 'asc' },
     }),
+    // Rep stats — groupBy ile N+1 yok
+    prisma.user.findMany({ where: { tenantId, isActive: true }, select: { id: true, name: true } }),
+    prisma.salesEntry.groupBy({
+      by: ['userId'],
+      where: { tenantId, date: { gte: startOfMonth } },
+      _sum: { amount: true },
+    }),
+    prisma.salesEntry.groupBy({
+      by: ['userId'],
+      where: { tenantId, date: today },
+      _sum: { amount: true },
+    }),
+    prisma.salesTarget.findMany({ where: { tenantId, monthKey } }),
+    prisma.customer.groupBy({
+      by: ['assignedRepId'],
+      where: { tenantId, assignedRepId: { not: null } },
+      _count: { id: true },
+    }),
   ])
 
   // Daily revenue for this month
   const dailyMap: Record<string, number> = {}
   for (const e of salesEntries) {
     const d = new Date(e.date)
-    const key = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`
+    const key = `${String(d.getUTCDate()).padStart(2, '0')}.${String(d.getUTCMonth() + 1).padStart(2, '0')}`
     dailyMap[key] = (dailyMap[key] ?? 0) + e.amount
   }
   const dailyRevenue = Object.entries(dailyMap).map(([date, amount]) => ({ date, amount }))
 
-  // Per-rep stats with targets
-  const reps = await prisma.user.findMany({
-    where: { tenantId, isActive: true },
-    select: { id: true, name: true },
-  })
+  // Rep lookup maps
+  const monthMap  = Object.fromEntries(monthRevsByRep.map(r => [r.userId, r._sum.amount ?? 0]))
+  const todayMap  = Object.fromEntries(todayRevsByRep.map(r => [r.userId, r._sum.amount ?? 0]))
+  const targetMap = Object.fromEntries(targets.map(t => [t.userId, t]))
+  const custMap   = Object.fromEntries(custCounts.map(c => [c.assignedRepId!, c._count.id]))
 
-  const repDetails = await Promise.all(reps.map(async rep => {
-    const [revenue, target, customerCount] = await Promise.all([
-      prisma.salesEntry.aggregate({
-        where: { tenantId, userId: rep.id, date: { gte: startOfMonth } },
-        _sum: { amount: true },
-      }),
-      prisma.salesTarget.findUnique({
-        where: { tenantId_userId_monthKey: { tenantId, userId: rep.id, monthKey } },
-      }),
-      prisma.customer.count({ where: { tenantId, assignedRepId: rep.id } }),
-    ])
-    const rev = revenue._sum.amount ?? 0
-    const tgt = target?.revenueTarget ?? 0
+  const repDetails = reps.map(rep => {
+    const rev = monthMap[rep.id]  ?? 0
+    const tgt = targetMap[rep.id]?.revenueTarget ?? 0
     return {
       id: rep.id,
       name: rep.name,
       revenue: rev,
       target: tgt,
       pct: tgt > 0 ? Math.min(100, (rev / tgt) * 100) : 0,
-      customerCount,
+      customerCount: custMap[rep.id] ?? 0,
     }
-  }))
+  })
 
   const monthlyTarget = repDetails.reduce((s, r) => s + r.target, 0)
 
-  // Alerts
   const alerts: { type: string; message: string; count?: number; amount?: number }[] = []
   if (overdueCount > 0) alerts.push({ type: 'overdue', message: 'gecikmiş borç', count: overdueCount, amount: overdueDebtAgg._sum.amount ?? 0 })
   if (unassignedCustomers > 0) alerts.push({ type: 'unassigned', message: 'atanmamış müşteri', count: unassignedCustomers })
@@ -90,26 +99,28 @@ export async function GET() {
 
   return NextResponse.json({
     monthlyRevenue: monthlyRevenueAgg._sum.amount ?? 0,
-    todayRevenue: todayRevenueAgg._sum.amount ?? 0,
+    todayRevenue:   todayRevenueAgg._sum.amount  ?? 0,
     activeCustomers,
-    overdueDebt: overdueDebtAgg._sum.amount ?? 0,
-    totalDebt: totalDebtAgg._sum.amount ?? 0,
+    overdueDebt:    overdueDebtAgg._sum.amount   ?? 0,
+    totalDebt:      totalDebtAgg._sum.amount     ?? 0,
     repsCount,
     overdueCount,
     pendingDebtCount,
     unassignedCustomers,
     monthlyTarget,
     repDetails: repDetails.sort((a, b) => b.revenue - a.revenue),
-    repStats: repDetails.map(r => ({ name: r.name, revenue: r.revenue, target: r.target })),
+    repStats:   repDetails.map(r => ({ name: r.name, revenue: r.revenue, target: r.target })),
     recentPayments: recentPayments.map(p => ({
       id: p.id,
       amount: p.amount,
       paymentDate: p.paymentDate,
       method: p.method,
       customerName: p.customer.name,
-      recordedBy: p.recordedBy.name,
+      recordedBy:   p.recordedBy.name,
     })),
     dailyRevenue,
     alerts,
+  }, {
+    headers: { 'Cache-Control': 'private, max-age=20, stale-while-revalidate=60' },
   })
 }
