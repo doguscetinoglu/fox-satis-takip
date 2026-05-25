@@ -50,7 +50,8 @@ export async function POST(req: Request) {
   if (!session || session.role !== 'TENANT_ADMIN') return unauthorized()
 
   const body = await req.json()
-  const { userId, customerId, amount, salesCount, date, description } = body
+  const { userId, customerId, amount, salesCount, date, description,
+          createDebt, documentNo, dueDate } = body
 
   if (!userId) return NextResponse.json({ hata: 'Temsilci seçilmedi' }, { status: 400 })
 
@@ -62,17 +63,40 @@ export async function POST(req: Request) {
     if (!cust) return NextResponse.json({ hata: 'Müşteri bulunamadı' }, { status: 404 })
   }
 
-  const entry = await prisma.salesEntry.create({
-    data: {
-      tenantId: session.tenantId,
-      userId,
-      customerId: customerId || undefined,
-      amount: Number(amount),
-      salesCount: Number(salesCount) || 1,
-      date: new Date(date),
-      description,
-    },
-  })
+  if (createDebt && !customerId) {
+    return NextResponse.json({ hata: 'Borç kaydı için müşteri seçilmeli' }, { status: 400 })
+  }
+  if (createDebt && !dueDate) {
+    return NextResponse.json({ hata: 'Borç kaydı için vade tarihi gerekli' }, { status: 400 })
+  }
+
+  const [entry] = await prisma.$transaction([
+    prisma.salesEntry.create({
+      data: {
+        tenantId: session.tenantId,
+        userId,
+        customerId: customerId || undefined,
+        amount: Number(amount),
+        salesCount: Number(salesCount) || 1,
+        date: new Date(date),
+        description,
+      },
+    }),
+    ...(createDebt && customerId ? [
+      prisma.debt.create({
+        data: {
+          tenantId: session.tenantId,
+          customerId,
+          amount: Number(amount),
+          documentDate: new Date(date),
+          dueDate: new Date(dueDate),
+          documentNo: documentNo || undefined,
+          description,
+          status: 'PENDING',
+        },
+      }),
+    ] : []),
+  ])
 
   return NextResponse.json(entry)
 }

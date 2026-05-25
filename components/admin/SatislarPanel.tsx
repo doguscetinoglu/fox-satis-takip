@@ -91,9 +91,14 @@ export function SatislarPanel() {
 
   // Form
   const [showForm,   setShowForm]   = useState(false)
+  const defaultDueDate = () => {
+    const d = new Date(); d.setDate(d.getDate() + 30)
+    return d.toISOString().split('T')[0]
+  }
   const [form, setForm] = useState({
     userId: '', customerId: '', amount: '', salesCount: '1',
     date: new Date().toISOString().split('T')[0], description: '',
+    createDebt: false, documentNo: '', dueDate: defaultDueDate(),
   })
   const [saving,  setSaving]  = useState(false)
   const [formErr, setFormErr] = useState('')
@@ -197,7 +202,7 @@ export function SatislarPanel() {
         body: JSON.stringify({ ...form, amount: Number(form.amount), salesCount: Number(form.salesCount) }),
       })
       if (res.ok) {
-        setForm(f => ({ ...f, userId: '', customerId: '', amount: '', salesCount: '1', description: '' }))
+        setForm(f => ({ ...f, userId: '', customerId: '', amount: '', salesCount: '1', description: '', createDebt: false, documentNo: '', dueDate: defaultDueDate() }))
         setSaved(true)
         load()
         setTimeout(() => { setSaved(false); setShowForm(false) }, 1200)
@@ -300,43 +305,86 @@ export function SatislarPanel() {
               <h3 className="font-semibold mb-4 flex items-center gap-2 text-sm">
                 <TrendingUp className="w-4 h-4 text-blue-500" /> Yeni Satış Kaydı
               </h3>
-              <form onSubmit={handleCreate} className="grid sm:grid-cols-3 gap-3">
-                <select required value={form.userId}
-                  onChange={e => setForm(f => ({ ...f, userId: e.target.value }))}
-                  className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20">
-                  <option value="">Temsilci Seç *</option>
-                  {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
-                <select value={form.customerId}
-                  onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))}
-                  className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20">
-                  <option value="">Müşteri Seç (opsiyonel)</option>
-                  {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
-                </select>
-                <input type="number" placeholder="Tutar (₺) *" required min="0" step="0.01"
-                  value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                  className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20" />
-                <input type="number" placeholder="Satış Adedi" min="1"
-                  value={form.salesCount} onChange={e => setForm(f => ({ ...f, salesCount: e.target.value }))}
-                  className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20" />
-                <input type="date" required value={form.date}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20" />
-                <input placeholder="Açıklama"
-                  value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20" />
+              <form onSubmit={handleCreate} className="space-y-4">
+                {/* Satış Bilgileri */}
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <select required value={form.userId}
+                    onChange={e => setForm(f => ({ ...f, userId: e.target.value }))}
+                    className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500">
+                    <option value="">Temsilci Seç *</option>
+                    {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                  <select value={form.customerId}
+                    onChange={e => setForm(f => ({ ...f, customerId: e.target.value, createDebt: false }))}
+                    className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500">
+                    <option value="">Müşteri Seç (opsiyonel)</option>
+                    {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+                  </select>
+                  <input type="number" placeholder="Tutar (₺) *" required min="0" step="0.01"
+                    value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                    className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500" />
+                  <input type="number" placeholder="Satış Adedi" min="1"
+                    value={form.salesCount} onChange={e => setForm(f => ({ ...f, salesCount: e.target.value }))}
+                    className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500" />
+                  <input type="date" required value={form.date}
+                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500" />
+                  <input placeholder="Açıklama"
+                    value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                    className="px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-blue-500" />
+                </div>
+
+                {/* Borç Kaydı Toggle */}
+                {form.customerId && (
+                  <div className={`rounded-xl border transition-all ${form.createDebt ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-muted/30'}`}>
+                    <button type="button"
+                      onClick={() => setForm(f => ({ ...f, createDebt: !f.createDebt }))}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left">
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${form.createDebt ? 'border-amber-500 bg-amber-500' : 'border-border'}`}>
+                        {form.createDebt && <CheckCircle2 className="w-3 h-3 text-white" />}
+                      </div>
+                      <span className={form.createDebt ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}>
+                        Borç kaydı da oluştur
+                      </span>
+                      <span className="text-xs text-muted-foreground font-normal ml-auto">Müşteriye alacak açılır</span>
+                    </button>
+
+                    <AnimatePresence>
+                      {form.createDebt && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+                          className="overflow-hidden">
+                          <div className="grid sm:grid-cols-2 gap-3 px-4 pb-4">
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1.5">Vade Tarihi *</label>
+                              <input type="date" required={form.createDebt} value={form.dueDate}
+                                onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
+                                className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-amber-500" />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1.5">Evrak / Fatura No</label>
+                              <input placeholder="FTR-2026-001" value={form.documentNo}
+                                onChange={e => setForm(f => ({ ...f, documentNo: e.target.value }))}
+                                className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-amber-500" />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
 
                 {formErr && (
-                  <div className="sm:col-span-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
                     <X className="w-4 h-4 flex-shrink-0" /> {formErr}
                   </div>
                 )}
                 {saved && (
-                  <div className="sm:col-span-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
-                    <CheckCircle2 className="w-4 h-4" /> Satış başarıyla kaydedildi!
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
+                    <CheckCircle2 className="w-4 h-4" /> {form.createDebt ? 'Satış ve borç kaydı oluşturuldu!' : 'Satış başarıyla kaydedildi!'}
                   </div>
                 )}
-                <div className="sm:col-span-3 flex gap-3 justify-end pt-1">
+                <div className="flex gap-3 justify-end pt-1">
                   <button type="button" onClick={() => setShowForm(false)}
                     className="px-4 py-2 rounded-xl border border-border text-sm hover:bg-muted transition-colors">İptal</button>
                   <button type="submit" disabled={saving}
