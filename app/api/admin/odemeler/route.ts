@@ -40,11 +40,17 @@ export async function POST(req: Request) {
   const customer = await prisma.customer.findFirst({ where: { id: parsed.data.customerId, tenantId: session.tenantId } })
   if (!customer) return NextResponse.json({ hata: 'Müşteri bulunamadı' }, { status: 404 })
 
-  // session.id may be tenant.id (legacy sessions) — always resolve via User table
+  // session.id may equal session.tenantId in legacy sessions — resolve correct User ID
   let recordedById = session.id
   if (session.id === session.tenantId) {
-    const adminUser = await prisma.user.findFirst({ where: { tenantId: session.tenantId, role: 'TENANT_ADMIN' } })
-    if (!adminUser) return NextResponse.json({ hata: 'Yönetici kullanıcı bulunamadı' }, { status: 400 })
+    let adminUser = await prisma.user.findFirst({ where: { tenantId: session.tenantId, role: 'TENANT_ADMIN' } })
+    if (!adminUser) {
+      const tenant = await prisma.tenant.findUnique({ where: { id: session.tenantId } })
+      if (!tenant) return NextResponse.json({ hata: 'Tenant bulunamadı' }, { status: 400 })
+      adminUser = await prisma.user.create({
+        data: { tenantId: tenant.id, phone: tenant.phone, passwordHash: tenant.passwordHash, name: tenant.ownerName, role: 'TENANT_ADMIN' },
+      })
+    }
     recordedById = adminUser.id
   }
 
