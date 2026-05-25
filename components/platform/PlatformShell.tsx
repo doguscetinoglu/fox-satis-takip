@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Building2, CreditCard, Bell, LogOut,
   TrendingUp, Users, CheckCircle2, AlertTriangle, Clock,
   ChevronRight, XCircle, BadgeCheck, RefreshCw, Zap,
-  ShieldCheck, Activity, DollarSign,
+  ShieldCheck, Activity, DollarSign, Pencil, X, Save,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -92,6 +92,7 @@ export function PlatformShell() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [editTenant, setEditTenant] = useState<TenantFull | null>(null)
   const router = useRouter()
 
   const load = async (quiet = false) => {
@@ -140,6 +141,18 @@ export function PlatformShell() {
   ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 20) ?? []
 
   return (
+    <>
+    {/* ── Edit Tenant Modal ── */}
+    <AnimatePresence>
+      {editTenant && (
+        <TenantEditModal
+          tenant={editTenant}
+          onClose={() => setEditTenant(null)}
+          onSaved={() => { setEditTenant(null); load(true) }}
+        />
+      )}
+    </AnimatePresence>
+
     <div className="min-h-screen bg-[#060b18] text-white flex flex-col">
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -391,13 +404,19 @@ export function PlatformShell() {
                                 </div>
                               </td>
                               <td className="px-5 py-4">
-                                <select value={t.planStatus} onChange={e => changeStatus(t.id, e.target.value)}
-                                  className="text-xs px-2 py-1.5 rounded-lg bg-slate-700 border border-white/10 text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer">
-                                  <option value="TRIAL">Deneme</option>
-                                  <option value="ACTIVE">Aktif</option>
-                                  <option value="SUSPENDED">Askıda</option>
-                                  <option value="CANCELLED">İptal</option>
-                                </select>
+                                <div className="flex items-center gap-2">
+                                  <select value={t.planStatus} onChange={e => changeStatus(t.id, e.target.value)}
+                                    className="text-xs px-2 py-1.5 rounded-lg bg-slate-700 border border-white/10 text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer">
+                                    <option value="TRIAL">Deneme</option>
+                                    <option value="ACTIVE">Aktif</option>
+                                    <option value="SUSPENDED">Askıda</option>
+                                    <option value="CANCELLED">İptal</option>
+                                  </select>
+                                  <button onClick={() => setEditTenant(t)}
+                                    className="p-1.5 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 transition-colors cursor-pointer" title="Düzenle">
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </td>
                             </motion.tr>
                           )
@@ -557,5 +576,131 @@ export function PlatformShell() {
         )}
       </main>
     </div>
+    </>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+function TenantEditModal({ tenant, onClose, onSaved }: {
+  tenant: TenantFull
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const toDateInput = (iso: string | null | undefined) => {
+    if (!iso) return ''
+    return new Date(iso).toISOString().slice(0, 10)
+  }
+
+  const [form, setForm] = useState({
+    companyName: tenant.companyName,
+    ownerName:   tenant.ownerName,
+    phone:       tenant.phone,
+    planStatus:  tenant.planStatus,
+    trialEndsAt: toDateInput(tenant.trialEndsAt),
+    subscriptionEndsAt: toDateInput((tenant as unknown as Record<string, string>).subscriptionEndsAt),
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }))
+
+  async function save() {
+    setSaving(true)
+    setError('')
+    const res = await fetch(`/api/platform/tenantlar/${tenant.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyName: form.companyName,
+        ownerName:   form.ownerName,
+        phone:       form.phone,
+        planStatus:  form.planStatus,
+        trialEndsAt: form.trialEndsAt || undefined,
+        subscriptionEndsAt: form.subscriptionEndsAt || null,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.hata ?? 'Bir hata oluştu'); setSaving(false); return }
+    onSaved()
+  }
+
+  const field = (label: string, key: string, type = 'text') => (
+    <div>
+      <label className="block text-xs text-slate-400 mb-1.5 font-medium">{label}</label>
+      <input type={type} value={form[key as keyof typeof form] ?? ''}
+        onChange={e => set(key, e.target.value)}
+        className="w-full px-3 py-2.5 rounded-xl bg-slate-700/60 border border-white/10 text-white text-sm placeholder-slate-500
+          focus:outline-none focus:border-blue-500 focus:bg-slate-700 transition-colors" />
+    </div>
+  )
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <motion.div initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.92, opacity: 0, y: 20 }} transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/6 bg-slate-800/60">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
+              <Building2 className="w-4 h-4 text-blue-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-white">Firma Düzenle</p>
+              <p className="text-[10px] text-slate-500 truncate max-w-[200px]">{tenant.companyName}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/8 transition-colors cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="p-6 space-y-4">
+          {field('Firma Adı', 'companyName')}
+          {field('Yetkili Adı', 'ownerName')}
+          {field('Telefon', 'phone', 'tel')}
+
+          <div>
+            <label className="block text-xs text-slate-400 mb-1.5 font-medium">Plan Durumu</label>
+            <select value={form.planStatus} onChange={e => set('planStatus', e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-700/60 border border-white/10 text-white text-sm
+                focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
+              <option value="TRIAL">Deneme</option>
+              <option value="ACTIVE">Aktif</option>
+              <option value="SUSPENDED">Askıda</option>
+              <option value="CANCELLED">İptal</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {field('Deneme Bitiş', 'trialEndsAt', 'date')}
+            {field('Abonelik Bitiş', 'subscriptionEndsAt', 'date')}
+          </div>
+
+          {error && (
+            <div className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs">
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-6 pb-6">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors cursor-pointer">
+            İptal
+          </button>
+          <button onClick={save} disabled={saving}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-colors cursor-pointer">
+            {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+            Kaydet
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
