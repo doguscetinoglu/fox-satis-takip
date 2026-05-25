@@ -197,7 +197,7 @@ const colorMap: Record<string, string> = {
 
 /* ─── FAQ ─── */
 const faqs = [
-  { q: 'Planlar arasındaki fark nedir?', a: 'Başlangıç planı 5 temsilciye kadar destekler (100 ₺/ay). Profesyonel planda temsilci sınırı yok, gelişmiş raporlar ve öncelikli destek dahildir (300 ₺/ay). Ömür Boyu pakette sistemi kendi sunucunuza kuruyoruz, tek ödeme yapıyorsunuz ve aylık ücret ödemiyorsunuz.' },
+  { q: 'Planlar arasındaki fark nedir?', a: 'Profesyonel planda sınırsız temsilci, gelişmiş raporlar ve öncelikli destek dahildir (300 ₺/ay). Ömür Boyu pakette sistemi kendi sunucunuza kuruyoruz, tek ödeme yapıyorsunuz ve aylık ücret ödemiyorsunuz (20.000 ₺).' },
   { q: 'Ömür Boyu paket nasıl çalışır?', a: 'Sistemi sizin kendi sunucunuza (VPS/dedicated server) kuruyoruz, kaynak kodunu teslim ediyoruz. Kurulum yaklaşık 3 iş günü sürer. Sonrasında aylık hiçbir ücret yoktur.' },
   { q: 'Ödeme nasıl yapılıyor?', a: 'Aylık planlar için IBAN ile banka transferi yapıp sistem üzerinden bildiriyorsunuz, 1 iş günü içinde onaylıyoruz. Ömür Boyu paket için iletişime geçin.' },
   { q: 'Mevcut müşteri verilerimi nasıl aktarırım?', a: 'Excel şablonunu indirin, verilerinizi girin ve tek seferde yükleyin. Müşteri, satış ve borç verileri toplu aktarılabilir.' },
@@ -410,37 +410,10 @@ export default function LandingPage() {
             <p className="text-slate-400">7 gün ücretsiz deneyin, sonra devam edin</p>
           </FadeUp>
 
-          <div className="grid md:grid-cols-3 gap-6 items-start">
-
-            {/* Starter */}
-            <FadeUp delay={0.05}>
-              <motion.div whileHover={{ scale: 1.01 }}
-                className="relative p-7 rounded-2xl border border-white/10 bg-white/[0.03]">
-                <p className="text-sm font-semibold text-slate-300 mb-1">Başlangıç</p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-5xl font-extrabold tracking-tight">100</span>
-                  <span className="text-xl text-slate-400 font-semibold">₺</span>
-                  <span className="text-slate-500 text-sm">/ay</span>
-                </div>
-                <p className="text-xs text-slate-500 mb-6">Bulut tabanlı · IBAN ile ödeme</p>
-                <ul className="space-y-2.5 mb-7 text-sm">
-                  {[
-                    '5 satış temsilcisine kadar',
-                    'Sınırsız müşteri kaydı',
-                    'Ciro & borç takibi',
-                    'Aylık hedef belirleme',
-                    'Excel içe/dışa aktarma',
-                    'E-posta destek',
-                  ].map(f => <li key={f} className="flex items-center gap-2.5"><CheckCircle2 className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />{f}</li>)}
-                </ul>
-                <Link href="/kayit" className="block w-full py-3 text-center rounded-xl border border-white/15 hover:bg-white/5 text-sm font-semibold transition-all">
-                  7 Gün Ücretsiz Başla
-                </Link>
-              </motion.div>
-            </FadeUp>
+          <div className="grid md:grid-cols-2 gap-6 items-start max-w-3xl mx-auto">
 
             {/* Pro — öne çıkan */}
-            <FadeUp delay={0.1}>
+            <FadeUp delay={0.05}>
               <motion.div whileHover={{ scale: 1.01 }}
                 className="relative p-7 rounded-2xl border border-blue-500/40 bg-gradient-to-b from-blue-500/10 to-blue-500/5">
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 rounded-full bg-blue-600 text-xs font-bold tracking-wide shadow-lg shadow-blue-500/30 whitespace-nowrap">
@@ -473,7 +446,7 @@ export default function LandingPage() {
             </FadeUp>
 
             {/* Ömür Boyu */}
-            <FadeUp delay={0.15}>
+            <FadeUp delay={0.1}>
               <motion.div whileHover={{ scale: 1.01 }}
                 className="relative p-7 rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/8 to-transparent">
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 rounded-full bg-amber-600 text-xs font-bold tracking-wide shadow-lg shadow-amber-500/30 whitespace-nowrap">
