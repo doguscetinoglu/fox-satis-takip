@@ -207,8 +207,12 @@ export function SatislarPanel() {
         load()
         setTimeout(() => { setSaved(false); setShowForm(false) }, 1200)
       } else {
-        const d = await res.json()
-        setFormErr(d.hata ?? 'Kayıt başarısız')
+        try {
+          const d = await res.json()
+          setFormErr(d.hata ?? `Sunucu hatası (${res.status})`)
+        } catch {
+          setFormErr(`Sunucu hatası (${res.status})`)
+        }
       }
     } catch { setFormErr('Bağlantı hatası') }
     finally { setSaving(false) }

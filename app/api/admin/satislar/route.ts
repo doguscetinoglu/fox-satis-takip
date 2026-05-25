@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   const saleDate = new Date(date)
   const resolvedDueDate = dueDate ? new Date(dueDate) : new Date(saleDate.getTime() + 30 * 86400000)
 
-  const salesOp = prisma.salesEntry.create({
+  const entry = await prisma.salesEntry.create({
     data: {
       tenantId: session.tenantId,
       userId,
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
   })
 
   if (customerId) {
-    const debtOp = prisma.debt.create({
+    await prisma.debt.create({
       data: {
         tenantId: session.tenantId,
         customerId,
@@ -95,10 +95,7 @@ export async function POST(req: Request) {
         status: 'PENDING',
       },
     })
-    const [entry] = await prisma.$transaction([salesOp, debtOp])
-    return NextResponse.json(entry)
   }
 
-  const entry = await salesOp
   return NextResponse.json(entry)
 }

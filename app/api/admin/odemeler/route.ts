@@ -67,7 +67,7 @@ async function recalcDebts(tenantId: string, customerId: string) {
 
   const changed = ops.filter(o => o.changed)
   if (changed.length) {
-    await prisma.$transaction(
+    await Promise.all(
       changed.map(o => prisma.debt.update({ where: { id: o.id }, data: { status: o.newStatus } }))
     )
   }
