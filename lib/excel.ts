@@ -108,24 +108,30 @@ export type ParsedSalesRow = {
 }
 
 function parseTurkishDate(raw: unknown): Date | null {
-  // Excel cellDates:true → Date object
-  if (raw instanceof Date && !isNaN(raw.getTime())) return raw
+  // Excel cellDates:true → Date object; normalize to UTC midnight (timezone-safe)
+  if (raw instanceof Date && !isNaN(raw.getTime())) {
+    return new Date(Date.UTC(raw.getUTCFullYear(), raw.getUTCMonth(), raw.getUTCDate()))
+  }
 
   const s = String(raw ?? '').trim()
+  if (!s) return null
 
   // GG.AA.YYYY
   const m1 = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/)
-  if (m1) return new Date(Number(m1[3]), Number(m1[2]) - 1, Number(m1[1]))
+  if (m1) return new Date(Date.UTC(Number(m1[3]), Number(m1[2]) - 1, Number(m1[1])))
 
   // YYYY-MM-DD
   const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  if (m2) return new Date(Number(m2[1]), Number(m2[2]) - 1, Number(m2[3]))
+  if (m2) return new Date(Date.UTC(Number(m2[1]), Number(m2[2]) - 1, Number(m2[3])))
+
+  // DD/MM/YYYY veya D/M/YYYY
+  const m3 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (m3) return new Date(Date.UTC(Number(m3[3]), Number(m3[2]) - 1, Number(m3[1])))
 
   // Excel serial number (days since 1899-12-30)
   const n = Number(s)
   if (!isNaN(n) && n > 40000 && n < 110000) {
-    const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000)
-    return isNaN(d.getTime()) ? null : d
+    return new Date(Date.UTC(1899, 11, 30) + n * 86400000)
   }
 
   return null

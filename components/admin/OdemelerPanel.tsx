@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Search, X, TrendingUp, Calendar, CreditCard,
-  ChevronDown, ChevronUp, SlidersHorizontal, CheckCircle2,
+  ChevronDown, ChevronUp, SlidersHorizontal, CheckCircle2, Trash2,
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
@@ -96,9 +96,11 @@ export function OdemelerPanel() {
     paymentDate: new Date().toISOString().split('T')[0],
     method: '', description: '',
   })
-  const [saving,  setSaving]  = useState(false)
-  const [formErr, setFormErr] = useState('')
-  const [saved,   setSaved]   = useState(false)
+  const [saving,     setSaving]     = useState(false)
+  const [formErr,    setFormErr]    = useState('')
+  const [saved,      setSaved]      = useState(false)
+  const [confirmId,  setConfirmId]  = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Filters
   const [search,       setSearch]       = useState('')
@@ -193,6 +195,14 @@ export function OdemelerPanel() {
 
   function clearFilters() {
     setSearch(''); setFilterRep(''); setFilterMethod(''); setFilterPeriod('all')
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/admin/odemeler/${id}`, { method: 'DELETE' })
+      if (res.ok) { setConfirmId(null); load() }
+    } finally { setDeletingId(null) }
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -418,6 +428,7 @@ export function OdemelerPanel() {
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Yöntem</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Açıklama</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Kaydeden</th>
+                  <th className="w-10" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -429,7 +440,7 @@ export function OdemelerPanel() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.15, delay: i < 20 ? i * 0.02 : 0 }}
-                      className="hover:bg-muted/30 transition-colors"
+                      className="hover:bg-muted/30 transition-colors group"
                     >
                       {/* Müşteri */}
                       <td className="px-4 py-3">
@@ -480,6 +491,27 @@ export function OdemelerPanel() {
                       {/* Kaydeden */}
                       <td className="px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell">
                         {p.recordedBy.name}
+                      </td>
+
+                      {/* Sil */}
+                      <td className="px-2 py-3">
+                        {confirmId === p.id ? (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => handleDelete(p.id)} disabled={deletingId === p.id}
+                              className="px-2 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold disabled:opacity-60 transition-colors whitespace-nowrap">
+                              {deletingId === p.id ? '...' : 'Evet'}
+                            </button>
+                            <button onClick={() => setConfirmId(null)}
+                              className="px-2 py-1 rounded-lg border border-border text-xs hover:bg-muted transition-colors">
+                              Hayır
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConfirmId(p.id)}
+                            className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </td>
                     </motion.tr>
                   ))}
