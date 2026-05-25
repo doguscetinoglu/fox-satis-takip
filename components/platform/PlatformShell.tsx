@@ -3,9 +3,10 @@ import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Building2, CreditCard, Bell, LogOut,
-  TrendingUp, Users, CheckCircle2, AlertTriangle, Clock,
+  CheckCircle2, AlertTriangle, Clock,
   ChevronRight, XCircle, BadgeCheck, RefreshCw, Zap,
   ShieldCheck, Activity, DollarSign, Pencil, X, Save,
+  MessageSquare, Send, ChevronDown, ChevronUp, LifeBuoy,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -21,9 +22,16 @@ type AttentionItem = {
   id: string; companyName: string; ownerName: string; phone: string
   type: 'suspended' | 'new' | 'expiring'; trialEndsAt: string; createdAt: string
 }
+type SupportTicket = {
+  id: string; subject: string; message: string
+  status: 'OPEN' | 'REPLIED' | 'CLOSED'
+  reply: string | null; repliedAt: string | null; createdAt: string
+  tenant: { companyName: string; ownerName: string; phone: string }
+}
 type Stats = {
   totalTenants: number; activeTenants: number; trialTenants: number
   suspendedTenants: number; pendingPayments: number; monthlyRevenue: number
+  openTickets: number
   tenants: TenantFull[]; attentionItems: AttentionItem[]
 }
 
@@ -90,17 +98,24 @@ const TABS = [
 export function PlatformShell() {
   const [tab, setTab] = useState('dashboard')
   const [stats, setStats] = useState<Stats | null>(null)
+  const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editTenant, setEditTenant] = useState<TenantFull | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [expandedTicket, setExpandedTicket] = useState<string | null>(null)
+  const [replyDraft, setReplyDraft] = useState<Record<string, string>>({})
   const router = useRouter()
 
   const load = async (quiet = false) => {
     if (!quiet) setLoading(true); else setRefreshing(true)
-    const data = await fetch('/api/platform/stats').then(r => r.json())
-    setStats(data)
+    const [statsData, ticketsData] = await Promise.all([
+      fetch('/api/platform/stats').then(r => r.json()),
+      fetch('/api/platform/talepler').then(r => r.json()),
+    ])
+    setStats(statsData)
+    setTickets(Array.isArray(ticketsData) ? ticketsData : [])
     setLoading(false)
     setRefreshing(false)
   }
@@ -125,6 +140,27 @@ export function PlatformShell() {
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  async function replyTicket(ticketId: string, status?: string) {
+    const reply = replyDraft[ticketId]
+    if (!reply?.trim() && !status) return
+    setBusyId(ticketId)
+    const body: Record<string, string> = {}
+    if (reply?.trim()) body.reply = reply.trim()
+    if (status) body.status = status
+    const res = await fetch(`/api/platform/talepler/${ticketId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    setBusyId(null)
+    if (res.ok) {
+      showToast(status === 'CLOSED' ? 'Talep kapatıldı' : 'Yanıt gönderildi', true)
+      setReplyDraft(d => ({ ...d, [ticketId]: '' }))
+      load(true)
+    } else {
+      showToast('İşlem başarısız', false)
+    }
   }
 
   async function confirmPayment(paymentId: string, action: 'confirm' | 'reject') {
@@ -153,6 +189,7 @@ export function PlatformShell() {
   const trial = useCountUp(stats?.trialTenants ?? 0, !!stats)
   const revenue = useCountUp(stats?.monthlyRevenue ?? 0, !!stats)
   const pendingCount = stats?.pendingPayments ?? 0
+  const openTicketCount = tickets.filter(t => t.status === 'OPEN').length
 
   const allPending = stats?.tenants.flatMap(t =>
     t.subscriptionPayments.filter(p => p.status === 'PENDING').map(p => ({ ...p, tenant: t }))
@@ -226,8 +263,8 @@ export function PlatformShell() {
                 {t.id === 'odemeler' && pendingCount > 0 && (
                   <span className="relative ml-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-[10px] font-bold text-black">{pendingCount}</span>
                 )}
-                {t.id === 'talepler' && (stats?.attentionItems.length ?? 0) > 0 && (
-                  <span className="relative ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-[10px] font-bold text-white">{stats!.attentionItems.length}</span>
+                {t.id === 'talepler' && openTicketCount > 0 && (
+                  <span className="relative ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-[10px] font-bold text-white">{openTicketCount}</span>
                 )}
               </button>
             )
@@ -548,74 +585,105 @@ export function PlatformShell() {
               )}
 
               {/* ── TALEPLER ── */}
-              {tab === 'talepler' && stats && (
+              {tab === 'talepler' && (
                 <div className="space-y-5">
-                  <div>
-                    <h1 className="text-2xl font-extrabold tracking-tight">Dikkat Gerektiren</h1>
-                    <p className="text-slate-500 text-sm mt-1">Yeni kayıtlar, süresi bitmek üzere denemeler, askıdaki firmalar</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h1 className="text-2xl font-extrabold tracking-tight">Destek Talepleri</h1>
+                      <p className="text-slate-500 text-sm mt-1">Firmalardan gelen destek talepleri</p>
+                    </div>
+                    {openTicketCount > 0 && (
+                      <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-sm font-semibold">
+                        {openTicketCount} açık
+                      </span>
+                    )}
                   </div>
 
-                  {stats.attentionItems.length === 0 ? (
+                  {tickets.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-white/5 bg-slate-800/30 text-slate-600 gap-3">
-                      <Zap className="w-10 h-10" />
-                      <p>Her şey yolunda, dikkat gerektiren durum yok</p>
+                      <LifeBuoy className="w-10 h-10" />
+                      <p>Henüz destek talebi yok</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {stats.attentionItems.map((item, i) => {
-                        const cfgMap = {
-                          new:      { icon: Zap,           color: 'border-blue-500/25 bg-blue-500/5',   badge: 'bg-blue-400/15 text-blue-400 border-blue-400/30',   label: 'Yeni Kayıt' },
-                          expiring: { icon: Clock,         color: 'border-amber-500/25 bg-amber-500/5', badge: 'bg-amber-400/15 text-amber-400 border-amber-400/30', label: 'Süresi Bitiyor' },
-                          suspended:{ icon: AlertTriangle, color: 'border-red-500/25 bg-red-500/5',     badge: 'bg-red-400/15 text-red-400 border-red-400/30',       label: 'Askıda' },
-                        }
-                        const config = cfgMap[item.type] ?? cfgMap.new
-                        const Icon = config.icon
-                        const busy = busyId === item.id
+                      {tickets.map((ticket, i) => {
+                        const statusCfg = {
+                          OPEN:    { label: 'Açık',        cls: 'text-amber-400 bg-amber-400/15 border-amber-400/30',   dot: 'bg-amber-400 animate-pulse' },
+                          REPLIED: { label: 'Yanıtlandı',  cls: 'text-emerald-400 bg-emerald-400/15 border-emerald-400/30', dot: 'bg-emerald-400' },
+                          CLOSED:  { label: 'Kapalı',      cls: 'text-slate-500 bg-slate-400/10 border-slate-400/20',   dot: 'bg-slate-500' },
+                        }[ticket.status]
+                        const isOpen = expandedTicket === ticket.id
+                        const busy = busyId === ticket.id
                         return (
-                          <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                            className={`flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-2xl border ${config.color} transition-colors`}>
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-                                <Icon className="w-5 h-5 text-slate-300" />
-                              </div>
-                              <div className="min-w-0">
+                          <motion.div key={ticket.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                            className="rounded-2xl border border-white/6 bg-slate-800/50 overflow-hidden">
+                            {/* Header row */}
+                            <button onClick={() => setExpandedTicket(isOpen ? null : ticket.id)}
+                              className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-white/3 transition-colors cursor-pointer">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
+                              <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-semibold text-white">{item.companyName}</p>
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${config.badge}`}>{config.label}</span>
+                                  <p className="font-semibold text-white text-sm">{ticket.subject}</p>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${statusCfg.cls}`}>{statusCfg.label}</span>
                                 </div>
-                                <p className="text-sm text-slate-400">{item.ownerName} · {item.phone}</p>
-                                {item.type === 'expiring' && (
-                                  <p className="text-xs text-amber-400/80 mt-0.5">Deneme bitiş: {formatDate(item.trialEndsAt)}</p>
-                                )}
-                                {item.type === 'new' && (
-                                  <p className="text-xs text-blue-400/80 mt-0.5">Kayıt tarihi: {formatDate(item.createdAt)}</p>
-                                )}
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {ticket.tenant.companyName} · {ticket.tenant.ownerName} · {formatDate(ticket.createdAt)}
+                                </p>
                               </div>
-                            </div>
+                              {isOpen ? <ChevronUp className="w-4 h-4 text-slate-500 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />}
+                            </button>
 
-                            {/* Action buttons */}
-                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
-                              {item.type === 'suspended' ? (
-                                <>
-                                  <ActionBtn onClick={() => changeStatus(item.id, 'ACTIVE')} busy={busy} variant="green">Aktive Et</ActionBtn>
-                                  <ActionBtn onClick={() => changeStatus(item.id, 'CANCELLED')} busy={busy} variant="red">İptal Et</ActionBtn>
-                                </>
-                              ) : item.type === 'expiring' ? (
-                                <>
-                                  <ActionBtn onClick={() => changeStatus(item.id, 'ACTIVE')} busy={busy} variant="green">Aktive Et</ActionBtn>
-                                  <ActionBtn onClick={() => changeStatus(item.id, 'SUSPENDED')} busy={busy} variant="red">Askıya Al</ActionBtn>
-                                </>
-                              ) : (
-                                <>
-                                  <ActionBtn onClick={() => changeStatus(item.id, 'ACTIVE')} busy={busy} variant="green">Aktive Et</ActionBtn>
-                                  <ActionBtn onClick={() => changeStatus(item.id, 'SUSPENDED')} busy={busy} variant="ghost">Askıya Al</ActionBtn>
-                                </>
+                            <AnimatePresence>
+                              {isOpen && (
+                                <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                                  <div className="px-5 pb-5 space-y-4 border-t border-white/5 pt-4">
+                                    {/* Original message */}
+                                    <div className="p-4 rounded-xl bg-slate-700/50 space-y-1">
+                                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{ticket.tenant.companyName} · {ticket.tenant.phone}</p>
+                                      <p className="text-sm text-slate-200 whitespace-pre-wrap">{ticket.message}</p>
+                                    </div>
+
+                                    {/* Existing reply */}
+                                    {ticket.reply && (
+                                      <div className="p-4 rounded-xl bg-blue-500/8 border border-blue-500/20">
+                                        <p className="text-xs text-blue-400 font-medium mb-1">Yanıtınız · {ticket.repliedAt ? formatDate(ticket.repliedAt) : ''}</p>
+                                        <p className="text-sm text-slate-200 whitespace-pre-wrap">{ticket.reply}</p>
+                                      </div>
+                                    )}
+
+                                    {/* Reply form */}
+                                    {ticket.status !== 'CLOSED' && (
+                                      <div className="space-y-3">
+                                        <textarea
+                                          value={replyDraft[ticket.id] ?? ''}
+                                          onChange={e => setReplyDraft(d => ({ ...d, [ticket.id]: e.target.value }))}
+                                          placeholder="Yanıtınızı yazın..."
+                                          rows={3}
+                                          className="w-full px-3 py-2.5 rounded-xl bg-slate-700/60 border border-white/10 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none transition-colors"
+                                        />
+                                        <div className="flex gap-2">
+                                          <button onClick={() => replyTicket(ticket.id)} disabled={busy || !replyDraft[ticket.id]?.trim()}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-medium transition-colors cursor-pointer">
+                                            {busy ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                                            Yanıtla
+                                          </button>
+                                          <button onClick={() => replyTicket(ticket.id, 'CLOSED')} disabled={busy}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-700/60 hover:bg-slate-700 border border-white/10 disabled:opacity-40 text-slate-300 text-sm font-medium transition-colors cursor-pointer">
+                                            <XCircle className="w-3.5 h-3.5" />
+                                            Kapat
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {ticket.status === 'CLOSED' && (
+                                      <p className="text-xs text-slate-600 flex items-center gap-1.5">
+                                        <CheckCircle2 className="w-3.5 h-3.5" /> Bu talep kapatılmış
+                                      </p>
+                                    )}
+                                  </div>
+                                </motion.div>
                               )}
-                              <button onClick={() => setEditTenant(stats.tenants.find(t => t.id === item.id) ?? null)}
-                                className="p-2 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 transition-colors cursor-pointer" title="Düzenle">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                            </AnimatePresence>
                           </motion.div>
                         )
                       })}

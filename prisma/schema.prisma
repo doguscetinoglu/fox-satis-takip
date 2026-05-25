@@ -28,6 +28,7 @@ model Tenant {
   payments             Payment[]
   subscriptionPayments SubscriptionPayment[]
   activityLogs         ActivityLog[]
+  supportTickets       SupportTicket[]
 }
 
 enum PlanStatus {
@@ -199,6 +200,30 @@ enum SubPaymentStatus {
   PENDING
   CONFIRMED
   REJECTED
+}
+
+// ─── SUPPORT TICKET ────────────────────────────────────────
+model SupportTicket {
+  id        String       @id @default(cuid())
+  tenantId  String
+  subject   String
+  message   String
+  status    TicketStatus @default(OPEN)
+  reply     String?
+  repliedAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+enum TicketStatus {
+  OPEN
+  REPLIED
+  CLOSED
 }
 
 // ─── ACTIVITY LOG ──────────────────────────────────────────

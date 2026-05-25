@@ -11,7 +11,7 @@ export async function GET() {
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const [tenants, allPayments] = await Promise.all([
+  const [tenants, allPayments, openTickets] = await Promise.all([
     prisma.tenant.findMany({
       include: {
         _count: { select: { users: true, customers: true, salesEntries: true } },
@@ -22,6 +22,7 @@ export async function GET() {
     prisma.subscriptionPayment.findMany({
       where: { status: 'CONFIRMED', confirmedAt: { gte: startOfMonth } },
     }),
+    prisma.supportTicket.count({ where: { status: 'OPEN' } }),
   ])
 
   const withStatus = tenants.map(t => ({ ...t, effectiveStatus: getEffectivePlanStatus(t) }))
@@ -61,7 +62,7 @@ export async function GET() {
 
   return NextResponse.json({
     totalTenants, activeTenants, trialTenants, suspendedTenants,
-    pendingPayments, monthlyRevenue,
+    pendingPayments, monthlyRevenue, openTickets,
     tenants: withStatus,
     attentionItems,
   })

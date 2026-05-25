@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Users, UserCheck, Target, FileWarning,
-  CreditCard, BarChart2, BadgeDollarSign, TrendingUp, LogOut, X, Menu, ShoppingCart
+  CreditCard, BarChart2, BadgeDollarSign, TrendingUp, LogOut, X, Menu, ShoppingCart, LifeBuoy
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -19,6 +19,7 @@ const nav = [
   { href: '/admin/odemeler', label: 'Ödemeler', icon: CreditCard },
   { href: '/admin/raporlar', label: 'Raporlar', icon: BarChart2 },
   { href: '/admin/abonelik', label: 'Abonelik', icon: BadgeDollarSign },
+  { href: '/admin/destek', label: 'Destek', icon: LifeBuoy },
 ]
 
 export function AdminMenuButton() {
