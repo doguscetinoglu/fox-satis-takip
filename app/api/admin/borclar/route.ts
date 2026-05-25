@@ -9,18 +9,20 @@ export async function GET(req: Request) {
   if (!session || session.role !== 'TENANT_ADMIN') return unauthorized()
 
   const url = new URL(req.url)
-  const bucket = url.searchParams.get('bucket') || 'all'
-  const repId = url.searchParams.get('repId') || undefined
+  const showPaid = url.searchParams.get('showPaid') === 'true'
 
   const debts = await prisma.debt.findMany({
     where: {
       tenantId: session.tenantId,
-      status: { not: 'PAID' },
-      ...(repId ? { customer: { assignedRepId: repId } } : {}),
+      ...(showPaid ? {} : { status: { not: 'PAID' } }),
     },
     include: {
       customer: {
-        select: { name: true, code: true, phone: true, assignedRep: { select: { name: true } } },
+        select: {
+          id: true, name: true, code: true, phone: true,
+          assignedRepId: true,
+          assignedRep: { select: { id: true, name: true } },
+        },
       },
     },
     orderBy: { dueDate: 'asc' },
@@ -32,9 +34,7 @@ export async function GET(req: Request) {
     ageBucket: getDebtAgeBucket(getDebtAgeDays(d.dueDate)),
   }))
 
-  const filtered = bucket === 'all' ? withAge : withAge.filter(d => d.ageBucket === bucket)
-
-  return NextResponse.json(filtered)
+  return NextResponse.json(withAge)
 }
 
 export async function POST(req: Request) {
