@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import {
   Plus, TrendingUp, Users, ChevronDown, ChevronUp,
-  Pencil, X, Check, Eye, EyeOff, AlertCircle,
+  Pencil, X, Check, Eye, EyeOff, AlertCircle, KeyRound,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
@@ -39,6 +39,7 @@ function RepEditDrawer({ rep, onClose, onSaved }: { rep: Rep; onClose: () => voi
     password: '',
     confirmPassword: '',
   })
+  const [changePw, setChangePw] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -66,13 +67,10 @@ function RepEditDrawer({ rep, onClose, onSaved }: { rep: Rep; onClose: () => voi
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (form.password && form.password !== form.confirmPassword) {
-      setError('Şifreler eşleşmiyor')
-      return
-    }
-    if (form.password && form.password.length < 6) {
-      setError('Şifre en az 6 karakter olmalı')
-      return
+    if (changePw) {
+      if (!form.password) { setError('Yeni şifre boş olamaz'); return }
+      if (form.password.length < 6) { setError('Şifre en az 6 karakter olmalı'); return }
+      if (form.password !== form.confirmPassword) { setError('Şifreler eşleşmiyor'); return }
     }
 
     setSaving(true)
@@ -85,7 +83,7 @@ function RepEditDrawer({ rep, onClose, onSaved }: { rep: Rep; onClose: () => voi
     const sc = Number(form.salesCountTarget) || 0
     if (rt !== rep.target) payload.revenueTarget = rt
     if (sc !== rep.salesCountTarget) payload.salesCountTarget = sc
-    if (form.password) payload.password = form.password
+    if (changePw && form.password) payload.password = form.password
 
     if (Object.keys(payload).length === 0) { setSaving(false); onClose(); return }
 
@@ -162,26 +160,50 @@ function RepEditDrawer({ rep, onClose, onSaved }: { rep: Rep; onClose: () => voi
 
           {/* Şifre */}
           <section className="space-y-4">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Şifre Değiştir</h3>
-            <p className="text-xs text-muted-foreground -mt-2">Boş bırakılırsa mevcut şifre korunur.</p>
-            <div>
-              <label className={labelCls}>Yeni Şifre</label>
-              <div className="relative">
-                <input className={inputCls + ' pr-10'} value={form.password} onChange={e => set('password', e.target.value)}
-                  type={showPw ? 'text' : 'password'} placeholder="En az 6 karakter" />
-                <button type="button" onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Şifre</h3>
+              <button type="button"
+                onClick={() => { setChangePw(v => !v); set('password', ''); set('confirmPassword', '') }}
+                className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${changePw ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'}`}>
+                <KeyRound className="w-3 h-3" />
+                {changePw ? 'İptal' : 'Şifreyi Değiştir'}
+              </button>
             </div>
-            {form.password && (
-              <div>
-                <label className={labelCls}>Şifre Tekrar</label>
-                <input className={inputCls} value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)}
-                  type={showPw ? 'text' : 'password'} placeholder="Şifreyi tekrar girin" />
-              </div>
-            )}
+
+            <AnimatePresence>
+              {changePw ? (
+                <motion.div key="pw-fields" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="space-y-3 overflow-hidden">
+                  <div>
+                    <label className={labelCls}>Yeni Şifre</label>
+                    <div className="relative">
+                      <input className={inputCls + ' pr-10'} value={form.password}
+                        onChange={e => set('password', e.target.value)}
+                        type={showPw ? 'text' : 'password'}
+                        placeholder="En az 6 karakter"
+                        autoComplete="new-password" />
+                      <button type="button" onClick={() => setShowPw(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                        {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Şifre Tekrar</label>
+                    <input className={inputCls} value={form.confirmPassword}
+                      onChange={e => set('confirmPassword', e.target.value)}
+                      type={showPw ? 'text' : 'password'}
+                      placeholder="Şifreyi tekrar girin"
+                      autoComplete="new-password" />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.p key="pw-hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="text-xs text-muted-foreground">
+                  Mevcut şifre korunuyor. Değiştirmek için butona tıklayın.
+                </motion.p>
+              )}
+            </AnimatePresence>
           </section>
 
           {/* Error */}
