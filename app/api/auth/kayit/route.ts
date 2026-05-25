@@ -31,7 +31,12 @@ export async function POST(req: Request) {
       data: { companyName, ownerName, phone, passwordHash, planStatus: 'TRIAL', trialEndsAt },
     })
 
-    await createSession({ id: tenant.id, tenantId: tenant.id, name: ownerName, role: 'TENANT_ADMIN', planStatus: 'TRIAL' })
+    // Create a User record for the admin so recordedById FK works everywhere
+    const adminUser = await prisma.user.create({
+      data: { tenantId: tenant.id, phone, passwordHash, name: ownerName, role: 'TENANT_ADMIN' },
+    })
+
+    await createSession({ id: adminUser.id, tenantId: tenant.id, name: ownerName, role: 'TENANT_ADMIN', planStatus: 'TRIAL' })
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error(err)

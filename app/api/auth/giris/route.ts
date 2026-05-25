@@ -35,7 +35,14 @@ export async function POST(req: Request) {
       const ok = await bcrypt.compare(sifre, tenant.passwordHash)
       if (!ok) return NextResponse.json({ hata: 'Telefon veya şifre hatalı' }, { status: 401 })
       const planStatus = getEffectivePlanStatus(tenant)
-      await createSession({ id: tenant.id, tenantId: tenant.id, name: tenant.ownerName, role: 'TENANT_ADMIN', planStatus })
+      // Find or create a User record so session.id is always a valid User FK
+      let adminUser = await prisma.user.findFirst({ where: { tenantId: tenant.id, role: 'TENANT_ADMIN' } })
+      if (!adminUser) {
+        adminUser = await prisma.user.create({
+          data: { tenantId: tenant.id, phone: tenant.phone, passwordHash: tenant.passwordHash, name: tenant.ownerName, role: 'TENANT_ADMIN' },
+        })
+      }
+      await createSession({ id: adminUser.id, tenantId: tenant.id, name: tenant.ownerName, role: 'TENANT_ADMIN', planStatus })
       return NextResponse.json({ rol: 'TENANT_ADMIN' })
     }
 

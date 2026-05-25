@@ -18,6 +18,7 @@ export function OdemelerPanel() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ customerId: '', amount: '', paymentDate: new Date().toISOString().split('T')[0], method: '', description: '' })
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -32,10 +33,24 @@ export function OdemelerPanel() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const res = await fetch('/api/admin/odemeler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, amount: Number(form.amount) }) })
-    setSaving(false)
-    if (res.ok) { setForm(f => ({ ...f, customerId: '', amount: '', method: '', description: '' })); setShowForm(false); load() }
-    else { const d = await res.json(); alert(d.hata) }
+    setError('')
+    try {
+      const res = await fetch('/api/admin/odemeler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, amount: Number(form.amount) }) })
+      if (res.ok) {
+        setForm(f => ({ ...f, customerId: '', amount: '', method: '', description: '' }))
+        setShowForm(false)
+        load()
+      } else {
+        const text = await res.text()
+        let msg = 'Ödeme kaydedilemedi'
+        try { msg = JSON.parse(text).hata ?? msg } catch {}
+        setError(msg)
+      }
+    } catch {
+      setError('Bağlantı hatası oluştu')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -63,6 +78,11 @@ export function OdemelerPanel() {
               className="px-3 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none" />
             <input placeholder="Açıklama" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="sm:col-span-2 px-3 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none" />
+            {error && (
+              <div className="sm:col-span-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                {error}
+              </div>
+            )}
             <div className="sm:col-span-3 flex gap-3 justify-end">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted">İptal</button>
               <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium disabled:opacity-60">

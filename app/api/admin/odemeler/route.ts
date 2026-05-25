@@ -40,6 +40,14 @@ export async function POST(req: Request) {
   const customer = await prisma.customer.findFirst({ where: { id: parsed.data.customerId, tenantId: session.tenantId } })
   if (!customer) return NextResponse.json({ hata: 'Müşteri bulunamadı' }, { status: 404 })
 
+  // session.id may be tenant.id (legacy sessions) — always resolve via User table
+  let recordedById = session.id
+  if (session.id === session.tenantId) {
+    const adminUser = await prisma.user.findFirst({ where: { tenantId: session.tenantId, role: 'TENANT_ADMIN' } })
+    if (!adminUser) return NextResponse.json({ hata: 'Yönetici kullanıcı bulunamadı' }, { status: 400 })
+    recordedById = adminUser.id
+  }
+
   const payment = await prisma.payment.create({
     data: {
       tenantId: session.tenantId,
@@ -48,7 +56,7 @@ export async function POST(req: Request) {
       paymentDate: new Date(parsed.data.paymentDate),
       method: parsed.data.method,
       description: parsed.data.description,
-      recordedById: session.id,
+      recordedById,
     },
   })
 
