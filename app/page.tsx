@@ -6,6 +6,7 @@ import {
   TrendingUp, Users, Target, FileText, ChevronRight, BarChart2,
   Bell, Shield, CheckCircle2, Zap, ArrowRight, Play, X,
 } from 'lucide-react'
+import { SalesFoxIcon } from '@/components/ui/SalesFoxIcon'
 
 /* ─── Animated counter ─── */
 function Counter({ to, suffix = '', prefix = '' }: { to: number; suffix?: string; prefix?: string }) {
@@ -127,7 +128,7 @@ function DashboardPreview() {
         <div className="w-3 h-3 rounded-full bg-red-500/70" />
         <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
         <div className="w-3 h-3 rounded-full bg-green-500/70" />
-        <div className="mx-auto text-xs text-slate-500 font-mono">Fox Satış Takip · Dashboard</div>
+        <div className="mx-auto text-xs text-slate-500 font-mono">SalesFox · Dashboard</div>
       </div>
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 p-4">
@@ -215,10 +216,8 @@ export default function LandingPage() {
         className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <TrendingUp className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">Fox Satış Takip</span>
+            <SalesFoxIcon size={32} />
+            <span className="font-bold text-lg tracking-tight">SalesFox</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
             <a href="#ozellikler" className="hover:text-white transition-colors">Özellikler</a>
@@ -523,10 +522,8 @@ export default function LandingPage() {
       <footer className="border-t border-white/5 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-              <TrendingUp className="w-3 h-3 text-white" />
-            </div>
-            <span>Fox Satış Takip</span>
+            <SalesFoxIcon size={22} />
+            <span>SalesFox</span>
           </div>
           <p>© {new Date().getFullYear()} Tüm hakları saklıdır</p>
           <div className="flex gap-5">

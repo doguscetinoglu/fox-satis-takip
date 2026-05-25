@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {trialDays !== null && <TrialBanner daysRemaining={trialDays} />}
           <header className="header-glass flex items-center justify-between px-4 md:px-6 py-3.5 border-b gap-3 sticky top-0 z-30">
             <AdminMenuButton />
-            <h1 className="text-sm font-medium text-muted-foreground truncate">{tenant?.companyName ?? 'Fox Satış Takip'}</h1>
+            <h1 className="text-sm font-medium text-muted-foreground truncate">{tenant?.companyName ?? 'SalesFox'}</h1>
             <ThemeToggle />
           </header>
           <main className="flex-1 p-3 md:p-6 overflow-auto">{children}</main>

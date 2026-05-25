@@ -2,8 +2,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { TrendingUp, Phone, Lock, User, Building2, Eye, EyeOff } from 'lucide-react'
+import { Phone, Lock, User, Building2, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
+import { SalesFoxIcon } from '@/components/ui/SalesFoxIcon'
 
 export default function KayitPage() {
   const router = useRouter()
@@ -60,8 +61,8 @@ export default function KayitPage() {
           <div className="absolute -top-px left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
 
           <div className="mb-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 mb-4 shadow-lg glow-blue">
-              <TrendingUp className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4">
+              <SalesFoxIcon size={64} />
             </div>
             <h1 className="text-2xl font-bold text-white mb-1">Hesap Oluşturun</h1>
             <p className="text-sm text-slate-400">7 gün ücretsiz · Kredi kartı gerekmez</p>

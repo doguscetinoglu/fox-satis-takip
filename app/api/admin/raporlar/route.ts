@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
   if (format === 'xlsx') {
     const buffer = exportSalesReport({
-      title: 'Fox Satış Takip',
+      title: 'SalesFox',
       period: from && to ? `${from} - ${to}` : 'Tüm Zamanlar',
       entries: entries.map(e => ({
         date: formatDate(e.date),

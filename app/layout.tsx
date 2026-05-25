@@ -3,7 +3,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 
 export const metadata: Metadata = {
-  title: 'Fox Satış Takip',
+  title: 'SalesFox',
   description: 'Saha satış ekipleriniz için gelişmiş takip sistemi',
 }
 

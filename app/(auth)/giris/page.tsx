@@ -2,8 +2,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, TrendingUp, Lock, Phone } from 'lucide-react'
+import { Eye, EyeOff, Lock, Phone } from 'lucide-react'
 import Link from 'next/link'
+import { SalesFoxIcon } from '@/components/ui/SalesFoxIcon'
 
 export default function GirisPage() {
   const router = useRouter()
@@ -62,11 +63,11 @@ export default function GirisPage() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.15, duration: 0.4 }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 mb-4 shadow-lg glow-blue"
+              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
             >
-              <TrendingUp className="w-8 h-8 text-white" />
+              <SalesFoxIcon size={64} />
             </motion.div>
-            <h1 className="text-2xl font-bold text-white mb-1">Fox Satış Takip</h1>
+            <h1 className="text-2xl font-bold text-white mb-1">SalesFox</h1>
             <p className="text-sm text-slate-400">Saha satış yönetim sistemi</p>
           </div>
 

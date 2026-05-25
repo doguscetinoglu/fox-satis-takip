@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Users, UserCheck, Target, FileWarning,
-  CreditCard, BarChart2, BadgeDollarSign, TrendingUp, LogOut, X, Menu, ShoppingCart, LifeBuoy
+  CreditCard, BarChart2, BadgeDollarSign, LogOut, X, Menu, ShoppingCart, LifeBuoy
 } from 'lucide-react'
+import { SalesFoxIcon } from '@/components/ui/SalesFoxIcon'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useSidebar } from './sidebar-context'
@@ -46,8 +47,8 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
     <div className="flex flex-col h-full">
       <div className="p-4 border-b" style={{ borderColor: 'var(--nav-border)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/30">
-            <TrendingUp className="w-4 h-4 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-700/20 flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/20">
+            <SalesFoxIcon size={30} />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{company}</p>
