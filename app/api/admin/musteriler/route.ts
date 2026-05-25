@@ -12,10 +12,14 @@ export async function GET(req: Request) {
   const repId = url.searchParams.get('repId') || undefined
   const city = url.searchParams.get('city') || undefined
 
+  const repFilter =
+    repId === '__unassigned__' ? { assignedRepId: null } :
+    repId ? { assignedRepId: repId } : {}
+
   const customers = await prisma.customer.findMany({
     where: {
       tenantId: session.tenantId,
-      ...(repId ? { assignedRepId: repId } : {}),
+      ...repFilter,
       ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}),
     },
     include: {

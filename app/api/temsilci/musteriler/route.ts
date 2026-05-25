@@ -8,7 +8,10 @@ export async function GET() {
   if (!session || session.role !== 'SALES_REP') return unauthorized()
 
   const customers = await prisma.customer.findMany({
-    where: { tenantId: session.tenantId, assignedRepId: session.id },
+    where: {
+      tenantId: session.tenantId,
+      OR: [{ assignedRepId: session.id }, { assignedRepId: null }],
+    },
     include: {
       debts: { where: { status: { not: 'PAID' } }, select: { amount: true, dueDate: true, status: true } },
     },

@@ -1,12 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Upload, Download, Search, Edit2, Trash2 } from 'lucide-react'
-import { formatCurrency, formatDate, getDebtAgeDays } from '@/lib/utils'
+import { Plus, Upload, Download, Search, Trash2, UserCheck } from 'lucide-react'
+import { formatCurrency, getDebtAgeDays } from '@/lib/utils'
 import { DebtAgeBadge } from '@/components/ui/DebtAgeBadge'
 import { CustomerImportModal } from './CustomerImportModal'
 
 type Customer = {
   id: string; code: string; name: string; phone?: string; city?: string
+  assignedRepId: string | null
   assignedRep: { name: string } | null
   debts: { amount: number; dueDate: string; status: string }[]
 }
@@ -23,6 +24,7 @@ export function MusterilerPanel() {
   const [showImport, setShowImport] = useState(false)
   const [form, setForm] = useState({ code: '', name: '', phone: '', city: '', assignedRepId: '' })
   const [saving, setSaving] = useState(false)
+  const [assigningId, setAssigningId] = useState<string | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -51,6 +53,22 @@ export function MusterilerPanel() {
     load()
   }
 
+  async function handleAssign(customerId: string, repId: string) {
+    setAssigningId(customerId)
+    await fetch(`/api/admin/musteriler/${customerId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignedRepId: repId === '' ? null : repId }),
+    })
+    setAssigningId(null)
+    // Update locally without full reload for snappier UX
+    setCustomers(prev => prev.map(c => {
+      if (c.id !== customerId) return c
+      const rep = reps.find(r => r.id === repId) ?? null
+      return { ...c, assignedRepId: repId || null, assignedRep: rep ? { name: rep.name } : null }
+    }))
+  }
+
   const filtered = customers.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.code.toLowerCase().includes(search.toLowerCase())
@@ -71,6 +89,7 @@ export function MusterilerPanel() {
         <select value={filterRep} onChange={e => setFilterRep(e.target.value)}
           className="px-3 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none">
           <option value="">Tüm Temsilciler</option>
+          <option value="__unassigned__">Atanmamış</option>
           {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
         </select>
         <button onClick={() => window.open('/api/admin/musteriler/import?template=true')}
@@ -102,7 +121,7 @@ export function MusterilerPanel() {
             ))}
             <select value={form.assignedRepId} onChange={e => setForm(f => ({ ...f, assignedRepId: e.target.value }))}
               className="px-3 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none">
-              <option value="">Temsilci Seç</option>
+              <option value="">Temsilci Seç (Opsiyonel)</option>
               {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
             <div className="sm:col-span-3 flex gap-3 justify-end">
@@ -114,6 +133,12 @@ export function MusterilerPanel() {
           </form>
         </div>
       )}
+
+      {/* Info banner */}
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/8 border border-blue-500/20 text-xs text-blue-600 dark:text-blue-400">
+        <UserCheck className="w-3.5 h-3.5 flex-shrink-0" />
+        Atanmamış müşteriler tüm temsilcilerde görünür. Bir temsilciye bağlandığında yalnızca o temsilcide görünür.
+      </div>
 
       {/* Table */}
       {loading ? (
@@ -127,7 +152,7 @@ export function MusterilerPanel() {
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Kod</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Müşteri</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Şehir</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Temsilci</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Temsilci</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Açık Borç</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Gecikme</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground"></th>
@@ -142,7 +167,27 @@ export function MusterilerPanel() {
                       {c.phone && <p className="text-xs text-muted-foreground">{c.phone}</p>}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{c.city ?? '-'}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{c.assignedRep?.name ?? <span className="text-amber-400">Atanmamış</span>}</td>
+                    <td className="px-4 py-3">
+                      <div className="relative">
+                        <select
+                          value={c.assignedRepId ?? ''}
+                          disabled={assigningId === c.id}
+                          onChange={e => handleAssign(c.id, e.target.value)}
+                          className={`text-xs px-2 py-1.5 pr-6 rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500/40 transition-all appearance-none cursor-pointer
+                            ${c.assignedRepId
+                              ? 'bg-blue-500/8 border-blue-500/30 text-blue-700 dark:text-blue-400 font-medium'
+                              : 'bg-amber-500/8 border-amber-500/30 text-amber-700 dark:text-amber-400'
+                            }
+                            ${assigningId === c.id ? 'opacity-50' : ''}`}
+                        >
+                          <option value="">Atanmamış</option>
+                          {reps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                        </select>
+                        {assigningId === c.id && (
+                          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 font-semibold">{formatCurrency(totalDebt(c))}</td>
                     <td className="px-4 py-3 hidden sm:table-cell">{maxOverdue(c) > 0 ? <DebtAgeBadge dueDate={new Date(Date.now() - maxOverdue(c) * 86400000)} /> : <span className="text-xs text-emerald-400">Güncel</span>}</td>
                     <td className="px-4 py-3">
