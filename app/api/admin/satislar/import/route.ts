@@ -67,10 +67,14 @@ export async function POST(req: Request) {
       },
     })
 
-    // Müşteri eşleştiyse borç da oluştur (30 gün vade)
+    // Müşteri eşleştiyse borç da oluştur
     if (customerId) {
-      const dueDate = new Date(row.date)
-      dueDate.setDate(dueDate.getDate() + 30)
+      // Vade tarihi: Excel'den geldiyse kullan, yoksa satış tarihinden 30 gün sonrası
+      const dueDate = row.dueDate ?? (() => {
+        const d = new Date(row.date)
+        d.setDate(d.getDate() + 30)
+        return d
+      })()
       await prisma.debt.create({
         data: {
           tenantId: session.tenantId,

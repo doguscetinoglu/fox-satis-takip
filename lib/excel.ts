@@ -86,13 +86,13 @@ export function parseCustomerSheet(buffer: Buffer): {
 export function generateSalesTemplate(): Buffer {
   const wb = XLSX.utils.book_new()
   const ws = XLSX.utils.aoa_to_sheet([
-    ['Temsilci Telefonu*', 'Müşteri Kodu', 'Tutar*', 'Adet', 'Tarih* (GG.AA.YYYY)', 'Açıklama'],
-    ['05551111111', 'MUS001', 5000, 10, '25.05.2026', 'Mayıs satışı'],
+    ['Temsilci Telefonu*', 'Müşteri Kodu', 'Tutar*', 'Adet', 'Tarih* (GG.AA.YYYY)', 'Vade Tarihi (GG.AA.YYYY)', 'Açıklama'],
+    ['05551111111', 'MUS001', 5000, 10, '25.05.2026', '24.06.2026', 'Mayıs satışı'],
   ])
-  // Telefon ve Tarih sütunlarını metin olarak işaretle — Excel'in 0 silmesi / otomatik dönüşümü engellemek için
-  const textCells = ['A1', 'A2', 'E1', 'E2']
+  // Telefon ve tarih sütunlarını metin olarak işaretle — Excel'in 0 silmesi / otomatik dönüşümü engellemek için
+  const textCells = ['A1', 'A2', 'E1', 'E2', 'F1', 'F2']
   textCells.forEach(addr => { if (ws[addr]) ws[addr].z = '@' })
-  ws['!cols'] = [20, 14, 12, 8, 22, 30].map(wch => ({ wch }))
+  ws['!cols'] = [20, 14, 12, 8, 22, 22, 30].map(wch => ({ wch }))
   XLSX.utils.book_append_sheet(wb, ws, 'Satışlar')
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))
 }
@@ -103,6 +103,7 @@ export type ParsedSalesRow = {
   amount: number
   salesCount: number
   date: Date
+  dueDate?: Date
   description?: string
 }
 
@@ -163,13 +164,16 @@ export function parseSalesSheet(buffer: Buffer): {
     const date = parseTurkishDate(rawDate)
     if (!date) { errors.push({ row: rowNum, field: 'Tarih', message: 'GG.AA.YYYY formatında girin (örn: 25.05.2026)' }); return }
 
+    const dueDate = parseTurkishDate(row[5]) ?? undefined
+
     rows.push({
       repPhone,
       customerCode: String(row[1] ?? '').trim() || undefined,
       amount,
       salesCount: parseInt(String(row[3] ?? '1')) || 1,
       date,
-      description: String(row[5] ?? '').trim() || undefined,
+      dueDate,
+      description: String(row[6] ?? '').trim() || undefined,
     })
   })
 
