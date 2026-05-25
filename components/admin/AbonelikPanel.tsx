@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Shield, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Shield, Clock, CheckCircle, XCircle, Copy, Check } from 'lucide-react'
 import { formatDate, getMonthKey } from '@/lib/utils'
 
 type AbonelikData = {
@@ -25,6 +25,13 @@ export function AbonelikPanel() {
   const [form, setForm] = useState({ period: getMonthKey(), ibanRef: '' })
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  function copyIban(iban: string) {
+    navigator.clipboard.writeText(iban.replace(/\s/g, ''))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     fetch('/api/admin/abonelik').then(r => r.json()).then(setData)
@@ -72,11 +79,22 @@ export function AbonelikPanel() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Alıcı</span>
-            <span className="font-semibold">{data.ibanName || 'Fox Yazılım'}</span>
+            <span className="font-semibold">{data.ibanName || 'SalesFox'}</span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">IBAN</span>
-            <span className="font-mono text-xs bg-muted px-2 py-1 rounded">{data.iban || 'Lütfen iletişime geçin'}</span>
+          <div className="flex justify-between items-center gap-3">
+            <span className="text-muted-foreground flex-shrink-0">IBAN</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs bg-muted px-2 py-1 rounded tracking-wide">
+                {data.iban || 'Lütfen iletişime geçin'}
+              </span>
+              {data.iban && (
+                <button onClick={() => copyIban(data.iban)}
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  title="Kopyala">
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <p className="text-xs text-muted-foreground">Ödemeyi yaptıktan sonra aşağıdaki formu doldurun. 1 iş günü içinde aktifleştirilir.</p>

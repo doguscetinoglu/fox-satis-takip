@@ -29,7 +29,7 @@ export default function KayitPage() {
       })
       const data = await res.json()
       if (!res.ok) { setHata(data.hata ?? 'Kayıt başarısız'); return }
-      router.push('/admin')
+      router.push('/admin/abonelik')
       router.refresh()
     } catch {
       setHata('Sunucu hatası, tekrar deneyin.')
