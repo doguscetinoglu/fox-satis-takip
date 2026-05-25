@@ -5,6 +5,7 @@ import {
   TrendingUp, AlertCircle, Users, UserCheck, CreditCard,
   Target, ArrowUpRight, Bell, CheckCircle2, UserX, Clock,
 } from 'lucide-react'
+import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
@@ -52,14 +53,12 @@ function greeting() {
   return 'İyi akşamlar'
 }
 
-function StatCard({ title, value, subtitle, icon: Icon, color, delay = 0, trend }: {
+function StatCard({ title, value, subtitle, icon: Icon, color, delay = 0, trend, href }: {
   title: string; value: string; subtitle?: string; icon: typeof TrendingUp
-  color: 'blue' | 'emerald' | 'violet' | 'red' | 'amber'; delay?: number; trend?: string
+  color: 'blue' | 'emerald' | 'violet' | 'red' | 'amber'; delay?: number; trend?: string; href?: string
 }) {
-  return (
-    <motion.div {...fadeUp(delay)}
-      whileHover={{ y: -3, transition: { duration: 0.2 } }}
-      className={`relative p-5 rounded-2xl border color-card-${color} cursor-default`}>
+  const inner = (
+    <>
       <div className="flex items-start justify-between mb-4">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
         <div className={`p-2 rounded-xl color-icon-${color}`}>
@@ -69,13 +68,32 @@ function StatCard({ title, value, subtitle, icon: Icon, color, delay = 0, trend 
       <p className={`text-2xl font-bold tracking-tight color-text-${color}`}>{value}</p>
       <div className="flex items-center justify-between mt-1">
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-        {trend && (
-          <span className={`flex items-center gap-0.5 text-xs font-medium color-text-emerald`}>
-            <ArrowUpRight className="w-3 h-3" /> {trend}
-          </span>
-        )}
+        {href
+          ? <span className={`flex items-center gap-0.5 text-xs font-medium color-text-${color} opacity-0 group-hover:opacity-100 transition-opacity`}>
+              <ArrowUpRight className="w-3 h-3" /> Görüntüle
+            </span>
+          : trend && (
+            <span className="flex items-center gap-0.5 text-xs font-medium color-text-emerald">
+              <ArrowUpRight className="w-3 h-3" /> {trend}
+            </span>
+          )
+        }
       </div>
-    </motion.div>
+    </>
+  )
+
+  const cls = `group relative p-5 rounded-2xl border color-card-${color} ${href ? 'cursor-pointer' : 'cursor-default'}`
+
+  if (href) {
+    return (
+      <motion.div {...fadeUp(delay)} whileHover={{ y: -3, transition: { duration: 0.2 } }}>
+        <Link href={href} className={`block ${cls}`}>{inner}</Link>
+      </motion.div>
+    )
+  }
+  return (
+    <motion.div {...fadeUp(delay)} whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      className={cls}>{inner}</motion.div>
   )
 }
 
@@ -110,10 +128,10 @@ export function AdminDashboard() {
     </div>
   )
 
-  const alertConfig: Record<string, { icon: typeof Bell; color: string; cardCls: string }> = {
-    overdue:    { icon: AlertCircle, color: 'color-text-red',   cardCls: 'border color-card-red' },
-    unassigned: { icon: UserX,       color: 'color-text-amber', cardCls: 'border color-card-amber' },
-    behind:     { icon: Target,      color: 'color-text-amber', cardCls: 'border color-card-amber' },
+  const alertConfig: Record<string, { icon: typeof Bell; color: string; cardCls: string; href: string }> = {
+    overdue:    { icon: AlertCircle, color: 'color-text-red',   cardCls: 'border color-card-red',   href: '/admin/borclar' },
+    unassigned: { icon: UserX,       color: 'color-text-amber', cardCls: 'border color-card-amber', href: '/admin/musteriler' },
+    behind:     { icon: Target,      color: 'color-text-amber', cardCls: 'border color-card-amber', href: '/admin/temsilciler' },
   }
 
   return (
@@ -131,10 +149,10 @@ export function AdminDashboard() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard title="Aylık Ciro" value={formatCurrency(monthlyRevenue)} subtitle={`Hedef: ${formatCurrency(stats.monthlyTarget)}`} icon={TrendingUp} color="blue" delay={0.05} />
-        <StatCard title="Bugünkü Ciro" value={formatCurrency(todayRevenue)} subtitle="Bugün gerçekleşen" icon={TrendingUp} color="emerald" delay={0.1} />
-        <StatCard title="Toplam Açık Borç" value={formatCurrency(totalDebt)} subtitle={`${stats.pendingDebtCount} kayıt`} icon={CreditCard} color="amber" delay={0.15} />
-        <StatCard title="Gecikmiş Borç" value={formatCurrency(overdueDebt)} subtitle={`${stats.overdueCount} kayıt`} icon={AlertCircle} color="red" delay={0.2} />
+        <StatCard title="Aylık Ciro" value={formatCurrency(monthlyRevenue)} subtitle={`Hedef: ${formatCurrency(stats.monthlyTarget)}`} icon={TrendingUp} color="blue" delay={0.05} href="/admin/satislar" />
+        <StatCard title="Bugünkü Ciro" value={formatCurrency(todayRevenue)} subtitle="Bugün gerçekleşen" icon={TrendingUp} color="emerald" delay={0.1} href="/admin/satislar" />
+        <StatCard title="Toplam Açık Borç" value={formatCurrency(totalDebt)} subtitle={`${stats.pendingDebtCount} kayıt`} icon={CreditCard} color="amber" delay={0.15} href="/admin/borclar" />
+        <StatCard title="Gecikmiş Borç" value={formatCurrency(overdueDebt)} subtitle={`${stats.overdueCount} kayıt`} icon={AlertCircle} color="red" delay={0.2} href="/admin/borclar" />
       </div>
 
       {/* Middle row */}
@@ -145,9 +163,10 @@ export function AdminDashboard() {
           {/* Overall target */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold flex items-center gap-2">
+              <Link href="/admin/hedefler" className="font-semibold flex items-center gap-2 hover:text-blue-400 transition-colors group">
                 <Target className="w-4 h-4 text-blue-400" /> Aylık Hedef İlerlemesi
-              </h2>
+                <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
               <span className={`text-sm font-bold px-3 py-1 rounded-full ${overallPct >= 80 ? 'color-card-emerald color-text-emerald' : overallPct >= 50 ? 'color-card-blue color-text-blue' : 'color-card-amber color-text-amber'}`}>
                 %{overallPct.toFixed(0)}
               </span>
@@ -162,9 +181,10 @@ export function AdminDashboard() {
           {/* Rep leaderboard */}
           {stats.repDetails.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Link href="/admin/temsilciler" className="text-sm font-medium text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors group w-fit">
                 <Users className="w-3.5 h-3.5" /> Temsilci Sıralaması
-              </h3>
+                <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
               {stats.repDetails.slice(0, 5).map((rep, i) => {
                 const medal = ['🥇', '🥈', '🥉'][i] ?? `#${i + 1}`
                 const barColor = rep.pct >= 80 ? '#10b981' : rep.pct >= 50 ? '#3b82f6' : '#f59e0b'
@@ -192,15 +212,15 @@ export function AdminDashboard() {
           {/* Bottom summary */}
           <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
             {[
-              { label: 'Temsilci', value: stats.repsCount, icon: Users, color: 'color-text-blue' },
-              { label: 'Müşteri', value: stats.activeCustomers, icon: UserCheck, color: 'color-text-violet' },
-              { label: 'Atanmamış', value: stats.unassignedCustomers, icon: UserX, color: 'color-text-amber' },
-            ].map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className="text-center p-3 rounded-xl bg-muted/40">
+              { label: 'Temsilci', value: stats.repsCount, icon: Users, color: 'color-text-blue', href: '/admin/temsilciler' },
+              { label: 'Müşteri', value: stats.activeCustomers, icon: UserCheck, color: 'color-text-violet', href: '/admin/musteriler' },
+              { label: 'Atanmamış', value: stats.unassignedCustomers, icon: UserX, color: 'color-text-amber', href: '/admin/musteriler' },
+            ].map(({ label, value, icon: Icon, color, href }) => (
+              <Link key={label} href={href} className="text-center p-3 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors group">
                 <Icon className={`w-4 h-4 mx-auto mb-1 ${color}`} />
                 <p className="font-bold text-lg">{value}</p>
                 <p className="text-xs text-muted-foreground">{label}</p>
-              </div>
+              </Link>
             ))}
           </div>
         </motion.div>
@@ -212,6 +232,7 @@ export function AdminDashboard() {
             <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
               <Bell className="w-4 h-4 text-amber-400" /> Uyarılar
             </h2>
+
             {stats.alerts.length === 0 ? (
               <div className="flex items-center gap-2 text-sm color-text-emerald">
                 <CheckCircle2 className="w-4 h-4" />
@@ -224,15 +245,18 @@ export function AdminDashboard() {
                   const Icon = conf.icon
                   return (
                     <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.35 + i * 0.08 }}
-                      className={`flex items-start gap-3 p-3 rounded-xl ${conf.cardCls}`}>
-                      <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${conf.color}`} />
-                      <div>
-                        <p className={`text-sm font-semibold ${conf.color}`}>{a.count} {a.message}</p>
-                        {a.amount !== undefined && (
-                          <p className="text-xs text-muted-foreground">{formatCurrency(a.amount)}</p>
-                        )}
-                      </div>
+                      transition={{ delay: 0.35 + i * 0.08 }}>
+                      <Link href={conf.href}
+                        className={`flex items-start gap-3 p-3 rounded-xl ${conf.cardCls} hover:opacity-80 transition-opacity`}>
+                        <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${conf.color}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold ${conf.color}`}>{a.count} {a.message}</p>
+                          {a.amount !== undefined && (
+                            <p className="text-xs text-muted-foreground">{formatCurrency(a.amount)}</p>
+                          )}
+                        </div>
+                        <ArrowUpRight className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${conf.color} opacity-60`} />
+                      </Link>
                     </motion.div>
                   )
                 })}
@@ -242,9 +266,10 @@ export function AdminDashboard() {
 
           {/* Recent payments */}
           <motion.div {...fadeUp(0.35)} className="p-5 rounded-2xl border border-border bg-card">
-            <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Link href="/admin/odemeler" className="font-semibold text-sm mb-3 flex items-center gap-2 hover:text-foreground text-foreground/90 transition-colors group w-fit">
               <CreditCard className="w-4 h-4 text-emerald-400" /> Son Ödemeler
-            </h2>
+              <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+            </Link>
             {stats.recentPayments.length === 0 ? (
               <p className="text-sm text-muted-foreground">Henüz ödeme kaydı yok</p>
             ) : (
@@ -274,9 +299,10 @@ export function AdminDashboard() {
       {/* Daily Revenue Chart */}
       {stats.dailyRevenue.length > 0 && (
         <motion.div {...fadeUp(0.45)} className="p-5 rounded-2xl border border-border bg-card">
-          <h2 className="font-semibold text-sm mb-5 flex items-center gap-2">
+          <Link href="/admin/raporlar" className="font-semibold text-sm mb-5 flex items-center gap-2 hover:text-blue-400 transition-colors group w-fit">
             <TrendingUp className="w-4 h-4 text-blue-400" /> Bu Ay Günlük Ciro
-          </h2>
+            <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+          </Link>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={stats.dailyRevenue}>
               <defs>
