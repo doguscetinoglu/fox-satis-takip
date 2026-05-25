@@ -11,11 +11,16 @@ export async function GET() {
   const payments = await prisma.payment.findMany({
     where: { tenantId: session.tenantId },
     include: {
-      customer: { select: { name: true, code: true } },
+      customer: {
+        select: {
+          id: true, name: true, code: true,
+          assignedRepId: true,
+          assignedRep: { select: { id: true, name: true } },
+        },
+      },
       recordedBy: { select: { name: true } },
     },
     orderBy: { paymentDate: 'desc' },
-    take: 100,
   })
 
   return NextResponse.json(payments)
