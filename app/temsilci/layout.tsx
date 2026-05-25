@@ -11,12 +11,13 @@ export default async function TemsilciLayout({ children }: { children: React.Rea
     <div className="flex min-h-screen bg-background">
       <TemsilciSidebar name={session.name} company={tenant?.companyName ?? ''} />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div className="md:hidden w-8" />
-          <h1 className="text-sm font-medium text-muted-foreground">{tenant?.companyName}</h1>
+        <header className="flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-border">
+          <div className="md:hidden w-9" />
+          <h1 className="text-sm font-medium text-muted-foreground truncate">{tenant?.companyName}</h1>
           <ThemeToggle />
         </header>
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        {/* pb-16 for mobile bottom nav clearance */}
+        <main className="flex-1 p-3 md:p-6 pb-20 md:pb-6 overflow-auto">{children}</main>
       </div>
     </div>
   )

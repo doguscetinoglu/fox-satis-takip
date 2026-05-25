@@ -124,23 +124,27 @@ export function MusterilerPanel() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  {['Kod', 'Müşteri', 'Şehir', 'Temsilci', 'Açık Borç', 'Gecikme', ''].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">{h}</th>
-                  ))}
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Kod</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Müşteri</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Şehir</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Temsilci</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Açık Borç</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Gecikme</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map(c => (
                   <tr key={c.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{c.code}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden sm:table-cell">{c.code}</td>
                     <td className="px-4 py-3">
                       <p className="font-medium">{c.name}</p>
                       {c.phone && <p className="text-xs text-muted-foreground">{c.phone}</p>}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.city ?? '-'}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.assignedRep?.name ?? <span className="text-amber-400">Atanmamış</span>}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{c.city ?? '-'}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{c.assignedRep?.name ?? <span className="text-amber-400">Atanmamış</span>}</td>
                     <td className="px-4 py-3 font-semibold">{formatCurrency(totalDebt(c))}</td>
-                    <td className="px-4 py-3">{maxOverdue(c) > 0 ? <DebtAgeBadge dueDate={new Date(Date.now() - maxOverdue(c) * 86400000)} /> : <span className="text-xs text-emerald-400">Güncel</span>}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{maxOverdue(c) > 0 ? <DebtAgeBadge dueDate={new Date(Date.now() - maxOverdue(c) * 86400000)} /> : <span className="text-xs text-emerald-400">Güncel</span>}</td>
                     <td className="px-4 py-3">
                       <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />

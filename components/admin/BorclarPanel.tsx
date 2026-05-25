@@ -67,9 +67,14 @@ export function BorclarPanel() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  {['Müşteri', 'Temsilci', 'Belge No', 'Tutar', 'Vade', 'Gecikme', 'Durum', ''].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">{h}</th>
-                  ))}
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Müşteri</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Temsilci</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Belge No</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Tutar</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Vade</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Gecikme</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Durum</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -81,12 +86,12 @@ export function BorclarPanel() {
                         <p className="font-medium">{d.customer.name}</p>
                         <p className="text-xs text-muted-foreground font-mono">{d.customer.code}</p>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{d.customer.assignedRep?.name ?? '-'}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{d.documentNo ?? '-'}</td>
+                      <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{d.customer.assignedRep?.name ?? '-'}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{d.documentNo ?? '-'}</td>
                       <td className="px-4 py-3 font-semibold">{formatCurrency(d.amount)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatDate(d.dueDate)}</td>
+                      <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{formatDate(d.dueDate)}</td>
                       <td className="px-4 py-3"><DebtAgeBadge dueDate={d.dueDate} /></td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 hidden sm:table-cell">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
                       </td>
                       <td className="px-4 py-3">

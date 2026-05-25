@@ -2,13 +2,14 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Users, PlusCircle, FileWarning, TrendingUp, LogOut, Menu, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 const nav = [
   { href: '/temsilci', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/temsilci/giris', label: 'Satış Girişi', icon: PlusCircle },
-  { href: '/temsilci/musteriler', label: 'Müşterilerim', icon: Users },
+  { href: '/temsilci/musteriler', label: 'Müşteriler', icon: Users },
   { href: '/temsilci/borclar', label: 'Borçlar', icon: FileWarning },
 ]
 
@@ -23,7 +24,7 @@ export function TemsilciSidebar({ name, company }: { name: string; company: stri
     router.refresh()
   }
 
-  const sidebar = (
+  const sidebarContent = (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-white/5">
         <div className="flex items-center gap-3">
@@ -36,13 +37,12 @@ export function TemsilciSidebar({ name, company }: { name: string; company: stri
           </div>
         </div>
       </div>
-
       <nav className="flex-1 p-3 space-y-0.5">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== '/temsilci' && pathname.startsWith(href))
           return (
             <Link key={href} href={href} onClick={() => setOpen(false)}
-              className={cn('flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+              className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
                 active ? 'bg-emerald-600/20 text-emerald-400 font-medium' : 'text-slate-400 hover:text-white hover:bg-white/5'
               )}>
               <Icon className="w-4 h-4 flex-shrink-0" />
@@ -51,9 +51,9 @@ export function TemsilciSidebar({ name, company }: { name: string; company: stri
           )
         })}
       </nav>
-
       <div className="p-3 border-t border-white/5">
-        <button onClick={logout} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full">
+        <button onClick={logout}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full">
           <LogOut className="w-4 h-4" />
           Çıkış Yap
         </button>
@@ -63,23 +63,59 @@ export function TemsilciSidebar({ name, company }: { name: string; company: stri
 
   return (
     <>
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 flex-shrink-0 bg-card border-r border-border flex-col h-screen sticky top-0">
-        {sidebar}
+        {sidebarContent}
       </aside>
-      <button onClick={() => setOpen(true)} className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-card border border-border">
+
+      {/* Mobile: hamburger trigger (in header via prop, but keep for fallback) */}
+      <button onClick={() => setOpen(true)}
+        className="md:hidden fixed top-3.5 left-4 z-40 p-2 rounded-lg bg-card border border-border shadow-sm">
         <Menu className="w-5 h-5" />
       </button>
-      {open && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
-          <aside className="relative w-56 bg-card border-r border-border flex flex-col h-full">
-            <button onClick={() => setOpen(false)} className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-            {sidebar}
-          </aside>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-50 flex md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              className="relative w-64 bg-card border-r border-border flex flex-col h-full shadow-2xl"
+            >
+              <button onClick={() => setOpen(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+              {sidebarContent}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile: bottom tab bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex">
+          {nav.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || (href !== '/temsilci' && pathname.startsWith(href))
+            return (
+              <Link key={href} href={href}
+                className={cn('flex-1 flex flex-col items-center gap-0.5 py-2 text-xs transition-colors',
+                  active ? 'text-emerald-400' : 'text-muted-foreground hover:text-foreground'
+                )}>
+                <Icon className={cn('w-5 h-5', active && 'drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]')} />
+                <span className="font-medium">{label}</span>
+              </Link>
+            )
+          })}
         </div>
-      )}
+      </nav>
     </>
   )
 }

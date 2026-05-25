@@ -77,23 +77,31 @@ export function OdemelerPanel() {
         <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="rounded-2xl border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>{['Müşteri', 'Tutar', 'Tarih', 'Yöntem', 'Kaydeden'].map(h => <th key={h} className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">{h}</th>)}</tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {payments.map(p => (
-                <tr key={p.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3"><p className="font-medium">{p.customer.name}</p><p className="text-xs text-muted-foreground">{p.customer.code}</p></td>
-                  <td className="px-4 py-3 font-semibold text-emerald-400">{formatCurrency(p.amount)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{formatDate(p.paymentDate)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.method ?? '-'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.recordedBy.name}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Müşteri</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Tutar</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Tarih</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Yöntem</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Kaydeden</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {payments.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">Ödeme kaydı bulunamadı</p>}
+              </thead>
+              <tbody className="divide-y divide-border">
+                {payments.map(p => (
+                  <tr key={p.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3"><p className="font-medium">{p.customer.name}</p><p className="text-xs text-muted-foreground">{p.customer.code}</p></td>
+                    <td className="px-4 py-3 font-semibold text-emerald-400">{formatCurrency(p.amount)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatDate(p.paymentDate)}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{p.method ?? '-'}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{p.recordedBy.name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {payments.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">Ödeme kaydı bulunamadı</p>}
+          </div>
         </div>
       )}
     </div>

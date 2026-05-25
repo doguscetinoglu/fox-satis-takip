@@ -3,10 +3,11 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Users, UserCheck, Target, FileWarning,
-  CreditCard, BarChart2, BadgeDollarSign, TrendingUp, LogOut, Menu, X
+  CreditCard, BarChart2, BadgeDollarSign, TrendingUp, LogOut, X, Menu
 } from 'lucide-react'
-import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useSidebar } from './sidebar-context'
 
 const nav = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -19,10 +20,19 @@ const nav = [
   { href: '/admin/abonelik', label: 'Abonelik', icon: BadgeDollarSign },
 ]
 
+export function AdminMenuButton() {
+  const { toggle } = useSidebar()
+  return (
+    <button onClick={toggle} className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors">
+      <Menu className="w-5 h-5" />
+    </button>
+  )
+}
+
 export function AdminSidebar({ name, company }: { name: string; company: string }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const { open, close } = useSidebar()
 
   async function logout() {
     await fetch('/api/auth/cikis', { method: 'POST' })
@@ -30,7 +40,7 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
     router.refresh()
   }
 
-  const sidebar = (
+  const sidebarContent = (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-white/5">
         <div className="flex items-center gap-3">
@@ -48,8 +58,8 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
         {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== '/admin' && pathname.startsWith(href))
           return (
-            <Link key={href} href={href} onClick={() => setOpen(false)}
-              className={cn('flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+            <Link key={href} href={href} onClick={close}
+              className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
                 active ? 'bg-blue-600/20 text-blue-400 font-medium' : 'text-slate-400 hover:text-white hover:bg-white/5'
               )}>
               <Icon className="w-4 h-4 flex-shrink-0" />
@@ -60,7 +70,8 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
       </nav>
 
       <div className="p-3 border-t border-white/5">
-        <button onClick={logout} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full">
+        <button onClick={logout}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full">
           <LogOut className="w-4 h-4" />
           Çıkış Yap
         </button>
@@ -70,28 +81,38 @@ export function AdminSidebar({ name, company }: { name: string; company: string 
 
   return (
     <>
-      {/* Desktop */}
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 flex-shrink-0 bg-card border-r border-border flex-col h-screen sticky top-0">
-        {sidebar}
+        {sidebarContent}
       </aside>
 
-      {/* Mobile toggle */}
-      <button onClick={() => setOpen(true)} className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-card border border-border">
-        <Menu className="w-5 h-5" />
-      </button>
-
       {/* Mobile drawer */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
-          <aside className="relative w-56 bg-card border-r border-border flex flex-col h-full">
-            <button onClick={() => setOpen(false)} className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-            {sidebar}
-          </aside>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-50 flex md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={close}
+            />
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              className="relative w-64 bg-card border-r border-border flex flex-col h-full shadow-2xl"
+            >
+              <button onClick={close} className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+              {sidebarContent}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
