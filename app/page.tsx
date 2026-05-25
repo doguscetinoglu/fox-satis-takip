@@ -24,6 +24,87 @@ function Counter({ to, suffix = '', prefix = '' }: { to: number; suffix?: string
   return <span ref={ref}>{prefix}{display.toLocaleString('tr-TR')}{suffix}</span>
 }
 
+/* ─── Falling charts background ─── */
+type BarItem  = { id: number; left: string; delay: number; dur: number; kind: 'bars'; color: string; bars: number[] }
+type LineItem = { id: number; left: string; delay: number; dur: number; kind: 'line'; color: string; pts: number[] }
+type StatItem = { id: number; left: string; delay: number; dur: number; kind: 'stat'; color: string; value: string; sub: string }
+type FallItem = BarItem | LineItem | StatItem
+
+const FALL_CHARTS: FallItem[] = [
+  { id: 0, left: '3%',  delay: 0,    dur: 14, kind: 'bars', color: '#3b82f6', bars: [40, 65, 50, 80, 60, 75, 90, 85] },
+  { id: 1, left: '12%', delay: 5.5,  dur: 11, kind: 'stat', color: '#10b981', value: '₺184K', sub: 'Aylık Ciro' },
+  { id: 2, left: '21%', delay: 2,    dur: 16, kind: 'bars', color: '#8b5cf6', bars: [70, 45, 85, 60, 90, 70, 80] },
+  { id: 3, left: '31%', delay: 9,    dur: 13, kind: 'line', color: '#3b82f6', pts: [25, 45, 35, 62, 50, 76, 62, 88, 74] },
+  { id: 4, left: '42%', delay: 3.5,  dur: 17, kind: 'bars', color: '#10b981', bars: [55, 75, 45, 85, 65, 90, 75] },
+  { id: 5, left: '54%', delay: 11,   dur: 12, kind: 'stat', color: '#f59e0b', value: '%78', sub: 'Hedef' },
+  { id: 6, left: '64%', delay: 1,    dur: 15, kind: 'bars', color: '#3b82f6', bars: [60, 80, 50, 90, 70, 85, 95, 75] },
+  { id: 7, left: '74%', delay: 7,    dur: 14, kind: 'line', color: '#8b5cf6', pts: [20, 42, 34, 58, 48, 72, 60, 85, 78] },
+  { id: 8, left: '83%', delay: 4,    dur: 15, kind: 'bars', color: '#10b981', bars: [45, 70, 55, 80, 65, 75, 85] },
+  { id: 9, left: '92%', delay: 8,    dur: 11, kind: 'stat', color: '#3b82f6', value: '94%', sub: 'Başarı' },
+]
+
+function MiniChartCard({ c }: { c: FallItem }) {
+  const base = 'p-3 rounded-2xl border border-white/10 bg-white/[0.05]'
+  if (c.kind === 'stat') {
+    return (
+      <div className={`${base} px-5 py-3 text-center min-w-[80px]`}>
+        <p className="text-base font-bold leading-tight" style={{ color: c.color }}>{c.value}</p>
+        <p className="text-[9px] mt-0.5 text-white/30">{c.sub}</p>
+      </div>
+    )
+  }
+  if (c.kind === 'line') {
+    const W = 88, H = 44
+    const xs = c.pts.map((_, i) => (i / (c.pts.length - 1)) * W)
+    const ys = c.pts.map(v => H - (v / 100) * H)
+    const poly = c.pts.map((_, i) => `${xs[i].toFixed(1)},${ys[i].toFixed(1)}`).join(' ')
+    const fill = `0,${H} ${poly} ${W},${H}`
+    return (
+      <div className={base}>
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+          <polygon points={fill} fill={c.color + '25'} />
+          <polyline points={poly} fill="none" stroke={c.color} strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round" />
+          {c.pts.map((_, i) => (
+            <circle key={i} cx={xs[i]} cy={ys[i]} r="2" fill={c.color} opacity={0.8} />
+          ))}
+        </svg>
+      </div>
+    )
+  }
+  return (
+    <div className={base}>
+      <div className="flex items-end gap-[3px] h-11 w-[76px]">
+        {c.bars.map((h, i) => (
+          <div key={i} style={{
+            height: `${h}%`,
+            background: i === c.bars.length - 1 ? c.color : c.color + '55',
+          }} className="flex-1 rounded-[3px] min-w-0" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FallingCharts() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ opacity: 0.22 }}>
+      {FALL_CHARTS.map(c => (
+        <motion.div
+          key={c.id}
+          className="absolute"
+          style={{ left: c.left }}
+          initial={{ y: -220 }}
+          animate={{ y: 1900 }}
+          transition={{ duration: c.dur, delay: c.delay, repeat: Infinity, repeatType: 'loop', ease: 'linear' }}
+        >
+          <MiniChartCard c={c} />
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
 /* ─── Fade-up wrapper ─── */
 function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef(null)
@@ -168,6 +249,8 @@ export default function LandingPage() {
             backgroundImage: `linear-gradient(rgba(59,130,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.5) 1px, transparent 1px)`,
             backgroundSize: '60px 60px',
           }} />
+          {/* Falling charts */}
+          <FallingCharts />
         </div>
 
         <div className="relative max-w-6xl mx-auto w-full">
