@@ -35,10 +35,16 @@ export async function GET(req: Request) {
 const createSchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
-  phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  city: z.string().optional(),
-  assignedRepId: z.string().optional(),
+  type: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  email: z.string().email().optional().or(z.literal('')).nullable(),
+  city: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  district: z.string().optional().nullable(),
+  postalCode: z.string().optional().nullable(),
+  taxNumber: z.string().optional().nullable(),
+  taxOffice: z.string().optional().nullable(),
+  assignedRepId: z.string().optional().nullable(),
 })
 
 export async function POST(req: Request) {
@@ -54,8 +60,14 @@ export async function POST(req: Request) {
   })
   if (exists) return NextResponse.json({ hata: 'Bu müşteri kodu zaten mevcut' }, { status: 409 })
 
+  const { assignedRepId, email, ...rest } = parsed.data
   const customer = await prisma.customer.create({
-    data: { tenantId: session.tenantId, ...parsed.data },
+    data: {
+      tenantId: session.tenantId,
+      ...rest,
+      assignedRepId: assignedRepId || null,
+      email: email || null,
+    },
   })
   return NextResponse.json(customer)
 }
