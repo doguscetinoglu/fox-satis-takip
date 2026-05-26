@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp, Users, Target, FileText, ChevronRight, BarChart2,
-  Bell, Shield, CheckCircle2, Zap, ArrowRight, Play, X,
+  Bell, Shield, CheckCircle2, Zap, ArrowRight, Play, X, Monitor,
 } from 'lucide-react'
 import { SalesFoxIcon } from '@/components/ui/SalesFoxIcon'
 
@@ -287,6 +287,14 @@ export default function LandingPage() {
                   Hemen Başla
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
+                <a href="/api/auth/demo-giris"
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl border border-emerald-500/30 hover:border-emerald-500/60 bg-emerald-500/10 hover:bg-emerald-500/20 font-medium text-base text-emerald-400 hover:text-emerald-300 transition-all">
+                  <span className="relative flex items-center justify-center w-7 h-7">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-20" />
+                    <Monitor className="w-4 h-4 relative" />
+                  </span>
+                  Canlı Demo
+                </a>
                 <button onClick={() => setShowVideo(true)}
                   className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 font-medium text-base transition-all">
                   <span className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
