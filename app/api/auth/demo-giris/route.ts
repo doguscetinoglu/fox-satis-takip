@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
+import { SignJWT } from 'jose'
 import { prisma } from '@/lib/prisma'
-import { createSession } from '@/lib/session'
 
+const SECRET = new TextEncoder().encode(process.env.SESSION_SECRET ?? 'fallback-dev-secret-32-chars!!')
+const COOKIE = 'fox_session'
 const DEMO_PHONE = '05551234567'
 
 export async function GET(req: Request) {
@@ -9,7 +11,7 @@ export async function GET(req: Request) {
     const tenant = await prisma.tenant.findUnique({ where: { phone: DEMO_PHONE } })
     if (!tenant) return NextResponse.redirect(new URL('/giris', req.url))
 
-    // Trial'ı her seferinde 7 gün uzat — demo hesabı asla SUSPENDED olmasın
+    // Trial'ı her ziyarette 7 gün uzat — demo asla SUSPENDED olmasın
     await prisma.tenant.update({
       where: { id: tenant.id },
       data: {
@@ -33,15 +35,28 @@ export async function GET(req: Request) {
       })
     }
 
-    await createSession({
+    const token = await new SignJWT({
       id: adminUser.id,
       tenantId: tenant.id,
       name: tenant.ownerName,
       role: 'TENANT_ADMIN',
       planStatus: 'TRIAL',
     })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('8h')
+      .sign(SECRET)
 
-    return NextResponse.redirect(new URL('/admin', req.url))
+    // Cookie'yi doğrudan redirect response'a bağla
+    const response = NextResponse.redirect(new URL('/admin', req.url))
+    response.cookies.set(COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 8,
+      path: '/',
+    })
+    return response
   } catch (err) {
     console.error('Demo giriş hatası:', err)
     return NextResponse.redirect(new URL('/giris', req.url))
