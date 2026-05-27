@@ -5,6 +5,9 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 export const metadata: Metadata = {
   title: 'SalesFox',
   description: 'Saha satış ekipleriniz için gelişmiş takip sistemi',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
