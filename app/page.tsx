@@ -216,10 +216,10 @@ export default function LandingPage() {
       <motion.nav initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
         className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <SalesFoxIcon size={32} />
             <span className="font-bold text-lg tracking-tight">SalesFox</span>
-          </div>
+          </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
             <a href="#ozellikler" className="hover:text-white transition-colors">Özellikler</a>
             <a href="#nasil-calisir" className="hover:text-white transition-colors">Nasıl çalışır?</a>
@@ -554,10 +554,10 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className="border-t border-white/5 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <SalesFoxIcon size={22} />
             <span>SalesFox</span>
-          </div>
+          </Link>
           <p>© {new Date().getFullYear()} Tüm hakları saklıdır</p>
           <div className="flex gap-5">
             <Link href="/giris" className="hover:text-slate-300 transition-colors">Giriş Yap</Link>
